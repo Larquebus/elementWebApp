@@ -45,7 +45,7 @@
 #		background_color: 0, 0, 0, 0
 #		color: 0, 0, 0, 1
 
-<ElementDetails>
+<ElementDetails>:
 	size: self.parent.size
 	pos: self.parent.pos
 	canvas:
@@ -55,10 +55,25 @@
 			size: self.size
 			pos: self.pos
 			
-<ElementNotes>
+<ElementNotes>:
 	size: self.size
 	pos: self.pos
 	on_text: self.parent.root_link.updateElement('notes', self.text)
+	
+<NewElement>:
+	size: 200, 50
+	pos: self.pos
+	size_hint: (None, None)
+	font_name: 'Arial'
+	font_size: 14
+	multiline: False
+	text: "Click to Add New Element"
+	on_press: self.nameNewElement()
+	
+<NewElementInput>:
+	multiline: False
+	on_text_validate: self.parent.addNewElementToWeb(self.text)
+	
 	
 <AppFrame>:
 	id: app_
@@ -67,6 +82,7 @@
 	pos: root.pos
 	web: self.web_data
 	element_details: element_details
+	element_display: display_window
 	
 	ElementDisplay:
 		id: display_window

@@ -62,7 +62,9 @@ class ElementFlat(StackLayout):
       self.add_widget(new_element)
       counter += 1
     print("Added %i elements to flat element display." % counter)
-    
+    add_element_button = NewElement()
+    self.add_widget(add_element_button)	
+	
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
@@ -82,9 +84,22 @@ class Element(Button):
     print('Selected ' + self.element_data.name)
     self.parent.root_link.element_details.activateElementNotes()
 	
-class newElement(Button):
-  new_element_id = NumericProperty()
-
+class NewElement(Button):
+  name_request = ObjectProperty(None)
+  
+  def addNewElementToWeb(self, text):
+    new_element_dict = {"name": text, "notes": "", "type": "NPC"}
+    self.parent.root_link.web_data.addElement(new_element_dict)
+    self.parent.root_link.web_data.save()
+    self.parent.root_link.display_window.flat_web_scroll.flat_web.getFlatElements()
+	
+  def nameNewElement(self):
+    self.name_request = NewElementInput(size=self.size, pos=self.pos)
+    self.add_widget(self.name_request)
+	
+class NewElementInput(TextInput):
+  pass
+  
 """
 These widgets make up the right hand window of the application, which shows notes and other details 
 about elements selected in the Element Web window.
