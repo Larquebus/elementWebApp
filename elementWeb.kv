@@ -72,7 +72,7 @@
 	
 <NewElementInput>:
 	multiline: False
-	on_text_validate: self.parent.addNewElementToWeb(self.text)
+	on_text_validate: self.parent.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
 	
 	
 <AppFrame>:

@@ -6,6 +6,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
+from kivy.uix.dropdown import DropDown
 
 from elementWebData import *
 
@@ -62,7 +63,7 @@ class ElementFlat(StackLayout):
       self.add_widget(new_element)
       counter += 1
     print("Added %i elements to flat element display." % counter)
-    add_element_button = NewElement()
+    add_element_button = NewElement(parent_display_type='flat')
     self.add_widget(add_element_button)	
 	
   
@@ -86,18 +87,54 @@ class Element(Button):
 	
 class NewElement(Button):
   name_request = ObjectProperty(None)
+  type_request = ObjectProperty(None)
+  new_element_obj = ObjectProperty(None)
+  parent_display_type = StringProperty()
   
-  def addNewElementToWeb(self, text):
-    new_element_dict = {"name": text, "notes": "", "type": "NPC"}
+  def addNewElementToWeb(self, text, type):
+    # Assemble new element data based on where the NewElement button sits in the tree:
+    if self.parent_display_type == 'flat':
+      new_element_dict = {"name": text, "notes": "", "type": type}
     self.parent.root_link.web_data.addElement(new_element_dict)
     self.parent.root_link.web_data.save()
-    self.parent.root_link.display_window.flat_web_scroll.flat_web.getFlatElements()
+	
+    # Add the new element object to the parent
 	
   def nameNewElement(self):
-    self.name_request = NewElementInput(size=self.size, pos=self.pos)
-    self.add_widget(self.name_request)
-	
+    if self.parent_display_type == 'flat':
+      # For new elements in the flat element display, add a BoxLayout that contains the 
+	  # text input and type select dropdown:
+      data_input = BoxLayout(orientation='vertical', size=self.size, pos=self.pos)
+      self.add_widget(data_input)
+	  
+      # Add the text input:
+      self.name_request = NewElementInput(size=self.size, pos=self.pos, size_hint=(None, None))
+      data_input.add_widget(self.name_request)
+      
+	  # Add the dropdown:
+      dropdown = DropDown()
+      
+      for type in self.parent.root_link.web_data.meta_data["available_types"]:
+        btn = Button(text=type, size_hint_y=None, height=25)
+        btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+        dropdown.add_widget(btn)
+		
+      data_input.dropdown_btn = NewElementDropdownBtn(text='select type', 
+                                           size_hint=(None, None), 
+                                           size=self.size, 
+                                           pos=self.pos)
+      data_input.dropdown_btn.bind(on_release=dropdown.open)
+      dropdown.bind(on_select=lambda instance, x: setattr(data_input.dropdown_btn, 'text', x))
+	  
+      data_input.add_widget(data_input.dropdown_btn)
+	  
 class NewElementInput(TextInput):
+  pass
+  
+class NewElementDropdownBtn(Button):
+  pass
+  
+class NewElementDropdownList(DropDown):
   pass
   
 """
