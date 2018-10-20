@@ -6,6 +6,7 @@
 """
 
 import json
+import re
 
 """
 The elementData object is the basic building block of the entire web.
@@ -71,6 +72,15 @@ class webData:
     self.elements["e" + str(data_dict["id"])] = new_element
     self.web_data_list.append(data_dict)
     self.next_id += 1
+	
+  # This method searches the names of elements and returns a dictionary with matches:
+  def search(self, search_str):
+    results = {}
+    for element in self.elements:
+      check = re.search(search_str, self.elements[element].name)
+      if check:
+        results[self.elements[element].name] = element
+    return results
 	
   # This method saves the web's list of meta data and dictionaries to the selected file.
   def save(self):
