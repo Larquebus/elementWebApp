@@ -77,7 +77,7 @@ class webData:
   def search(self, search_str):
     results = {}
     for element in self.elements:
-      check = re.search(search_str, self.elements[element].name)
+      check = re.search(search_str.lower(), self.elements[element].name.lower())
       if check:
         results[self.elements[element].name] = element
     return results
