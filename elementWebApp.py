@@ -85,7 +85,7 @@ class Element(Button):
     print('Selected ' + self.element_data.name)
     self.parent.root_link.element_details.activateElementNotes()
 	
-class NewElement(Button):
+class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
   type_request = ObjectProperty(None)
   new_element_obj = ObjectProperty(None)
@@ -97,36 +97,35 @@ class NewElement(Button):
       new_element_dict = {"name": text, "notes": "", "type": type}
     self.parent.root_link.web_data.addElement(new_element_dict)
     self.parent.root_link.web_data.save()
+    if self.parent_display_type =='flat':
+      self.clear_widgets()
 	
     # Add the new element object to the parent
 	
   def nameNewElement(self):
+    self.clear_widgets()
     if self.parent_display_type == 'flat':
-      # For new elements in the flat element display, add a BoxLayout that contains the 
-	  # text input and type select dropdown:
-      data_input = BoxLayout(orientation='vertical', size=self.size, pos=self.pos)
-      self.add_widget(data_input)
+      # For new elements in the flat element display, add a text input and type select dropdown:
 	  
       # Add the text input:
-      self.name_request = NewElementInput(size=self.size, pos=self.pos, size_hint=(None, None))
-      data_input.add_widget(self.name_request)
+      self.name_request = NewElementInput(size_hint_y=1.1)
+      self.add_widget(self.name_request)
       
 	  # Add the dropdown:
       dropdown = DropDown()
       
+      # Populate dropdown with types from the web's meta_data:
       for type in self.parent.root_link.web_data.meta_data["available_types"]:
         btn = Button(text=type, size_hint_y=None, height=25)
         btn.bind(on_release=lambda btn: dropdown.select(btn.text))
         dropdown.add_widget(btn)
 		
-      data_input.dropdown_btn = NewElementDropdownBtn(text='select type', 
-                                           size_hint=(None, None), 
-                                           size=self.size, 
-                                           pos=self.pos)
-      data_input.dropdown_btn.bind(on_release=dropdown.open)
-      dropdown.bind(on_select=lambda instance, x: setattr(data_input.dropdown_btn, 'text', x))
+      # Add the button that triggers the dropdown:
+      self.dropdown_btn = NewElementDropdownBtn(text='select type')
+      self.dropdown_btn.bind(on_release=dropdown.open)
+      dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
 	  
-      data_input.add_widget(data_input.dropdown_btn)
+      self.add_widget(self.dropdown_btn)
 	  
 class NewElementInput(TextInput):
   pass
