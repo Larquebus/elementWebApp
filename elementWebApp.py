@@ -5,7 +5,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import ObjectProperty, StringProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 
 from elementWebData import *
 
@@ -19,7 +19,6 @@ class AppFrame(BoxLayout):
   
   # Updates values for whatever element is currently selected, saves the element back to the web:
   def updateElement(self, value_to_update, new_value):
-    
     # These lines are repetitive... clean up somehow?
     self.selected_element.element_dict[value_to_update] = new_value
     self.web_data.elements[self.selected_element.element_key].element_dict[value_to_update] = new_value
@@ -54,16 +53,16 @@ class ElementFlat(StackLayout):
   def getFlatElements(self):
     self.clear_widgets()
     counter = 0
-#	new_elements = self.web_to_display.elements
     for e_id in self.web_to_display.elements:
-      new_element = self.web_to_display.elements[e_id]
-      self.add_widget(Element(id=e_id, 
-                              element_data=new_element, 
-                              element_name=new_element.name
-                              )
-                      )
+      data = self.web_to_display.elements[e_id]
+      new_element = Element(id=e_id, 
+                            element_data=data,
+                            element_name=data.name
+                            )
+      self.add_widget(new_element)
       counter += 1
     print("Added %i elements to flat element display." % counter)
+    
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
@@ -82,6 +81,9 @@ class Element(Button):
     self.parent.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
     self.parent.root_link.element_details.activateElementNotes()
+	
+class newElement(Button):
+  new_element_id = NumericProperty()
 
 """
 These widgets make up the right hand window of the application, which shows notes and other details 

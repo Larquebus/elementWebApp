@@ -38,6 +38,7 @@ class webData:
     self.meta_data = None
     self.id_list = []
     self.elements = {}
+    self.next_id = -1
     # Add a try/catch here to account for corrupted save files?
     # Load the selected file:
     with open(self.file_path, 'r') as r:
@@ -57,6 +58,20 @@ class webData:
       self.id_list.append(id)
       self.elements["e" + str(id)] = elementData(i)
 	  
+    # Sets up the web's next_id upon initialization:
+    for i in self.id_list:
+      if i > self.next_id:
+        self.next_id = i
+    self.next_id += 1
+	  
+  # This method adds a new element to the web:
+  def addElement(self, data_dict):
+    data_dict["id"] = self.next_id
+    new_element = elementData(data_dict)
+    self.elements["e" + str(data_dict["id"])] = new_element
+    self.web_data_list.append(data_dict)
+    self.next_id += 1
+	
   # This method saves the web's list of meta data and dictionaries to the selected file.
   def save(self):
     with open(self.file_path, 'w') as w:
