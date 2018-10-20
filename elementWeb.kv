@@ -1,0 +1,118 @@
+#:kivy 1.10.1
+
+<ElementDisplay>:
+	orientation: 'vertical'
+	size: self.parent.size
+	pos: self.parent.pos
+	canvas:
+		Color: 
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
+	
+<ElementDisplayBar>:
+	size: self.parent.size
+	pos: self.parent.pos
+	orientation: 'horizontal'
+	
+	canvas.before:
+		Color:
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
+
+<ElementDisplayWindow>:
+	size: self.parent.size
+	pos: self.parent.pos 
+	
+	canvas:
+		Color:
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
+
+<Element>:
+	size: len(self.element_name) * 10, 50
+	pos: self.pos
+	size_hint: (None, None)
+	text: self.element_name
+	font_name: 'Arial'
+	on_press: self.selectElement()
+#		background_normal: ''
+#		background_color: 0, 0, 0, 0
+#		color: 0, 0, 0, 1
+
+<ElementDetails>
+	size: self.parent.size
+	pos: self.parent.pos
+	canvas:
+		Color:
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
+			
+<ElementNotes>
+	size: self.size
+	pos: self.pos
+	on_text: self.parent.root_link.updateElement('notes', self.text)
+	
+<AppFrame>:
+	id: app_
+	orientation: 'horizontal'
+	size: root.size
+	pos: root.pos
+	web: self.web_data
+	element_details: element_details
+#	selected_element: self.web_data.elements["e" + str(self.web_data.meta_data["last_id"])]
+#	on_selected_element: self.element_details.setNotesText()
+	
+	ElementDisplay:
+		id: display_window
+		size_hint: 1.3, 1
+		ElementDisplayBar:
+			id: display_bar
+			size_hint: 1, .05
+			Button:
+				id: display_web_button
+				size: self.size
+				pos: self.pos
+				text: 'Display Web'
+			Button:
+				id: display_all_button
+				size: self.size
+				pos: self.pos
+				text: 'Display All Elements'
+				on_press: flat_web.getFlatElements()
+		ElementDisplayWindow:
+			ElementFlatScroll:
+				id: flat_web_scroll
+				size: self.parent.size
+				pos: self.parent.pos
+				do_scroll_x: False
+				ElementFlat:
+					id: flat_web
+					size: self.size
+					pos: self.pos
+					web_to_display: app_.web_data
+					orientation: 'tb-lr'
+					root_link: root
+	ElementDetails:
+		id: element_details
+		pos: self.pos
+		size: self.size
+		orientation: 'vertical'
+		root_link: root
+#		element_notes: element_note
+#		TextInput:
+#			id: element_note
+#			
+	
+	
+
+			
+
+		
