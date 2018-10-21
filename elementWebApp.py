@@ -68,6 +68,8 @@ class ElementFlat(StackLayout):
     add_element_button = NewElement(parent_display_type='flat')
     self.add_widget(add_element_button)	
 	
+	# test
+	
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
