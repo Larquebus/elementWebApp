@@ -54,14 +54,12 @@ class ElementFlat(StackLayout):
   def getFlatElements(self):
     self.clear_widgets()
     counter = 0
-    for e_id in self.root_link.web_data.elements:
-      data = self.root_link.web_data.elements[e_id]
+    for e_id in self.web_to_display.elements:
+      data = self.web_to_display.elements[e_id]
       new_element = Element(id=e_id, 
                             element_data=data,
-                            element_name=data.name							
+                            element_name=data.name
                             )
-      color_array = self.root_link.web_data.type_colors_kivy[data.type] 
-      new_element.background_color=color_array
       self.add_widget(new_element)
       counter += 1
     print("Added %i elements to flat element display." % counter)
