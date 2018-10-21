@@ -55,10 +55,12 @@
 			size: self.size
 			pos: self.pos
 			
-<ElementNotes>:
+<ElementNotesFrame>:
 	size: self.size
 	pos: self.pos
-	on_text: self.parent.root_link.updateElement('notes', self.text)
+			
+<ElementNotes>:
+	on_text: self.parent.parent.root_link.updateElement('notes', self.text)
 	
 <NewElement>:
 	size: 200, 50
@@ -90,7 +92,7 @@
 		size_hint: 1.3, 1
 		ElementDisplayBar:
 			id: display_bar
-			size_hint: 1, .05
+			size_hint_y: .05
 			Button:
 				id: display_web_button
 				size: self.size
@@ -119,7 +121,21 @@
 		pos: self.pos
 		size: self.size
 		orientation: 'vertical'
-		root_link: root		
+		root_link: root
+		detail_display_bar: detail_display_bar
+		notes_container: notes_container
+		ElementDisplayBar:
+			id: detail_display_bar
+			size_hint_y: .05
+			detail_display_label: detail_display_label
+			Label:
+				id: detail_display_label
+				size: self.parent.size
+				pos: self.parent.pos
+				text: 'Currently selected: '
+				color: [0, 0, 0, 1]
+		ElementNotesFrame:
+			id: notes_container
 	
 	
 

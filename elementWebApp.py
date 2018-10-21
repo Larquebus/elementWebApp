@@ -36,7 +36,7 @@ class ElementDisplay(BoxLayout):
   
 # A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
 class ElementDisplayBar(BoxLayout):
-  pass
+  detail_display_label = ObjectProperty(None)
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -84,7 +84,8 @@ class Element(Button):
   def selectElement(self):
     self.parent.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
-    self.parent.root_link.element_details.activateElementNotes()
+    self.parent.root_link.element_details.notes_container.activateElementNotes()
+    self.parent.root_link.element_details.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name
 	
 class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
@@ -143,15 +144,21 @@ about elements selected in the Element Web window.
 """
 class ElementDetails(BoxLayout):
   root_link = ObjectProperty(None)
+  detail_display_bar = ObjectProperty(None)
+  notes_container = ObjectProperty(None)
+  
+class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
+  
   def activateElementNotes(self):
     self.clear_widgets()
-    self.element_notes = ElementNotes()
+    self.element_notes = ElementNotes(size=self.size, pos=self.pos)
     self.add_widget(self.element_notes)
     self.setNotesText()
+	
   def setNotesText(self):
-    self.element_notes.text = self.root_link.selected_element.notes
-
+    self.element_notes.text = self.parent.root_link.selected_element.notes
+	
 class ElementNotes(TextInput):
   pass
   
