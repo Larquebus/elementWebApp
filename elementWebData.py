@@ -40,6 +40,8 @@ class webData:
     self.id_list = []
     self.elements = {}
     self.next_id = -1
+    self.type_colors = {}
+    self.type_colors_kivy = {}
     # Add a try/catch here to account for corrupted save files?
     # Load the selected file:
     with open(self.file_path, 'r') as r:
@@ -64,6 +66,14 @@ class webData:
       if i > self.next_id:
         self.next_id = i
     self.next_id += 1
+	
+    # Sets up the web's type_colors meta_data for use by kivy:
+    self.type_colors = self.meta_data["type_colors"]
+    for key in self.type_colors:
+      self.type_colors_kivy[key] = []
+      for i in self.type_colors[key]:
+        self.type_colors_kivy[key].append(i / 255)
+      self.type_colors_kivy[key].append(1)
 	  
   # This method adds a new element to the web:
   def addElement(self, data_dict):
