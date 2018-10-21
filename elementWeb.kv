@@ -41,9 +41,9 @@
 	text: self.element_name
 	font_name: 'Arial'
 	on_press: self.selectElement()
-#		background_normal: ''
-#		background_color: 0, 0, 0, 0
-#		color: 0, 0, 0, 1
+	background_normal: ''
+	color: [0, 0, 0, 1]
+	bold: True
 
 <ElementDetails>:
 	size: self.parent.size
@@ -112,7 +112,6 @@
 					id: flat_web
 					size: self.size
 					pos: self.pos
-					web_to_display: app_.web_data
 					orientation: 'tb-lr'
 					root_link: root
 	ElementDetails:
