@@ -59,7 +59,8 @@ class ElementFlat(StackLayout):
       data = self.root_link.web_data.elements[e_id]
       new_element = Element(id=e_id, 
                             element_data=data,
-                            element_name=data.name							
+                            element_name=data.name,
+                            details_link=self.root_link.element_details							
                             )
       color_array = self.root_link.web_data.type_colors_kivy[data.type] 
       new_element.background_color=color_array
@@ -82,11 +83,12 @@ class Element(Button):
   element_key = StringProperty()
   element_data = ObjectProperty(None)
   element_name = StringProperty()
+  details_link = ObjectProperty(None)
   def selectElement(self):
     self.parent.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
-    self.parent.root_link.element_details.notes_container.activateElementNotes()
-    self.parent.root_link.element_details.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name
+    self.details_link.notes_container.activateElementNotes()
+    self.details_link.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name
 	
 class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
