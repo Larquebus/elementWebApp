@@ -66,10 +66,7 @@ class ElementFlat(StackLayout):
       counter += 1
     print("Added %i elements to flat element display." % counter)
     add_element_button = NewElement(parent_display_type='flat')
-    self.add_widget(add_element_button)	
-	
-	# test
-	
+    self.add_widget(add_element_button)		
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
