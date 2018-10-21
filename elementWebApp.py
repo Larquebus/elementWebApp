@@ -7,6 +7,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.uix.dropdown import DropDown
+from kivy.core.window import Window
 
 from elementWebData import *
 
@@ -168,6 +169,7 @@ Build the app:
 class elementWebApp(App):
   def build(self):
     app = AppFrame()
+    Window.maximize()
 #    app.focus_name = app_data.web_data.elements["e" + str(app_data.web_data.meta_data["last_id"])].name
     print(app.web_data.meta_data)
 #    print(app_data.focus_name)
