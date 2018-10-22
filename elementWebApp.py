@@ -1,6 +1,7 @@
 from kivy.app import App
 from kivy.uix.widget import Widget
 from kivy.uix.textinput import TextInput
+from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
@@ -89,6 +90,7 @@ class Element(Button):
     print('Selected ' + self.element_data.name)
     self.details_link.notes_container.activateElementNotes()
     self.details_link.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name
+    self.details_link.type_content.addTypeContent(self.element_data.type)
 	
 class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
@@ -100,6 +102,8 @@ class NewElement(BoxLayout):
     # Assemble new element data based on where the NewElement button sits in the tree:
     if self.parent_display_type == 'flat':
       new_element_dict = {"name": text, "notes": "", "type": type}
+      if new_element_dict["type"] == 'NPC':
+        new_element_dict["rank"] = 'None'
     self.parent.root_link.web_data.addElement(new_element_dict)
     self.parent.root_link.web_data.save()
     if self.parent_display_type =='flat':
@@ -126,7 +130,7 @@ class NewElement(BoxLayout):
         dropdown.add_widget(btn)
 		
       # Add the button that triggers the dropdown:
-      self.dropdown_btn = NewElementDropdownBtn(text='select type')
+      self.dropdown_btn = Button(text='select type', height=25)
       self.dropdown_btn.bind(on_release=dropdown.open)
       dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
 	  
@@ -135,8 +139,8 @@ class NewElement(BoxLayout):
 class NewElementInput(TextInput):
   pass
   
-class NewElementDropdownBtn(Button):
-  pass
+#class NewElementDropdownBtn(Button):
+#  pass
   
 class NewElementDropdownList(DropDown):
   pass
@@ -149,6 +153,7 @@ class ElementDetails(BoxLayout):
   root_link = ObjectProperty(None)
   detail_display_bar = ObjectProperty(None)
   notes_container = ObjectProperty(None)
+  type_content = ObjectProperty(None)
   
 class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
@@ -164,6 +169,45 @@ class ElementNotesFrame(Widget):
 	
 class ElementNotes(TextInput):
   pass
+  
+class TypeSpecificContent(BoxLayout):
+  def addTypeContent(self, type):
+    self.clear_widgets()
+    if type == 'NPC':
+      # Add a label to indicate what is being displayed:
+      rank_label = Label(text="NPC's rank:", size_hint_y=0.07, color=[0, 0, 0, 1])
+      self.add_widget(rank_label)
+      # Get the NPC's current rank:
+      sel_npc_rank = self.parent.root_link.selected_element.rank
+      
+	  
+      # Add a drop down for the NPC's rank:
+      dropdown = DropDown()
+	  
+      # Populate dropdown with types from the web's meta_data:
+      for rank in self.parent.root_link.web_data.meta_data["npc_ranks"]:
+        btn = Button(text=rank, size_hint_y=None, height=25)
+        btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+        dropdown.add_widget(btn)
+		
+      # Add the button that triggers the dropdown:
+      if sel_npc_rank == 'None':
+        displayed_rank = 'Click to select rank'
+      else:
+        displayed_rank = sel_npc_rank
+      self.dropdown_btn = Button(text=displayed_rank, size_hint_y=0.1)
+      self.dropdown_btn.bind(on_release=dropdown.open)
+      dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
+	  
+      self.add_widget(self.dropdown_btn)
+	  
+      # Add the archetype label to indicate what is being displayed:
+      arch_label = Label(text="NPC's archetype:", size_hint_y=0.07, color=[0, 0, 0, 1])
+      self.add_widget(arch_label)
+	  
+      # Add the archetype textinput:
+      arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
+      self.add_widget(arch_input)
   
 """
 Build the app:

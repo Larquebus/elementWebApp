@@ -62,6 +62,10 @@
 <ElementNotes>:
 	on_text: self.parent.parent.root_link.updateElement('notes', self.text)
 	
+<TypeSpecificContent>:
+	size: self.size
+	pos: self.pos
+	
 <NewElement>:
 	size: 200, 50
 	pos: self.pos
@@ -124,6 +128,7 @@
 		root_link: root
 		detail_display_bar: detail_display_bar
 		notes_container: notes_container
+		type_content: type_content
 		ElementDisplayBar:
 			id: detail_display_bar
 			size_hint_y: .03
@@ -136,7 +141,10 @@
 				color: [0, 0, 0, 1]
 		ElementNotesFrame:
 			id: notes_container
-	
+		TypeSpecificContent:
+			id: type_content
+			orientation: 'vertical'
+			
 	
 
 			
