@@ -20,6 +20,9 @@ class elementData:
     self.name = self.element_dict["name"]
     self.notes = self.element_dict["notes"]
 	
+    if self.type == 'NPC':
+      self.rank = self.element_dict["rank"]
+	
 #    if (self.type == 'player' or self.type == 'npc'):
 #     self.allies = dict["ally_ids"]
 #      self.enemies = dict["enemy_ids"]
