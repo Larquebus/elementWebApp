@@ -22,7 +22,10 @@ class elementData:
 	
     if self.type == 'NPC':
       self.rank = self.element_dict["rank"]
-	
+	  
+    if (self.type == 'NPC' or self.type == 'Faction' or self.type == 'Party'):
+      self.stats = self.element_dict["stats"]
+	  
 #    if (self.type == 'player' or self.type == 'npc'):
 #     self.allies = dict["ally_ids"]
 #      self.enemies = dict["enemy_ids"]
