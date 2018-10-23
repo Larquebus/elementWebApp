@@ -80,7 +80,27 @@
 <NewElementInput>:
 	multiline: False
 	on_text_validate: self.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
-	
+
+<StatBubble>:
+	size: 100, 100
+	pos: self.pos
+	size_hint: (None, None)
+	canvas.before:
+		Color:
+			rgba: [0, 0, 0, 1]
+		Ellipse:
+			size: 56, 56
+			pos: self.center_x - 28, self.center_y - 28
+	canvas:
+		Color:
+			rgba: [1, 1, 1, 1]
+		Ellipse:
+			size: 52, 52
+			pos: self.center_x - 26, self.center_y - 26
+	Label:
+		text: self.parent.stat
+		color: [0, 0, 0, 1]
+		pos: self.parent.pos
 	
 <AppFrame>:
 	id: app_
@@ -144,8 +164,6 @@
 		TypeSpecificContent:
 			id: type_content
 			orientation: 'vertical'
-			
-	
 
 			
 

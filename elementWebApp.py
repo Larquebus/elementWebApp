@@ -5,10 +5,12 @@ from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
+from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.uix.dropdown import DropDown
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty
 from kivy.core.window import Window
+from kivy.graphics import BorderImage
 
 from elementWebData import *
 
@@ -73,13 +75,13 @@ class ElementFlat(StackLayout):
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
-  focus_name = StringProperty()
+  focus = ObjectProperty()
 
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(BoxLayout):
   pass
   
-# All visible widgets in the ElementWeb are Elements of various types.
+# All visible widgets in the ElementWeb and ElementFlat are Elements of various types.
 class Element(Button):
   element_key = StringProperty()
   element_data = ObjectProperty(None)
@@ -118,7 +120,6 @@ class NewElement(BoxLayout):
     self.clear_widgets()
     if self.parent_display_type == 'flat':
       # For new elements in the flat element display, add a text input and type select dropdown:
-	  
       # Add the text input:
       self.name_request = NewElementInput(size_hint_y=1.1)
       self.add_widget(self.name_request)
@@ -128,7 +129,9 @@ class NewElement(BoxLayout):
       
       # Populate dropdown with types from the web's meta_data:
       for type in app.root.web_data.meta_data["available_types"]:
-        btn = Button(text=type, size_hint_y=None, height=25)
+        btn = Button(text=type, size_hint_y=None, height=25, background_normal='')
+        color_array = app.root.web_data.type_colors_kivy[type] 
+        btn.background_color=color_array		
         btn.bind(on_release=lambda btn: dropdown.select(btn.text))
         dropdown.add_widget(btn)
 		
@@ -177,6 +180,25 @@ class TypeSpecificContent(BoxLayout):
   def addTypeContent(self, type):
     app = App.get_running_app()
     self.clear_widgets()
+    if (type == 'NPC' or type == 'Faction' or type == 'Party'):
+      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos)
+
+	  # Set up the stats to loop over when creating the stat grid based on the element's type:
+      if type == 'NPC':	
+        stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
+      else:
+        pass
+		
+      for i in stats_to_loop:
+        if (type == 'Faction' or type == 'Party'):
+          pass
+          #stat_bubble = StatBubble(stat='d' + str(i))
+          #stat_display.add_widget(stat_bubble)
+        else:
+          stat_bubble = StatBubble(stat='d' + str(i))
+          stat_display.add_widget(stat_bubble)
+      self.add_widget(stat_display)
+	  
     if type == 'NPC':
       # Add a label to indicate what is being displayed:
       rank_label = Label(text="NPC's rank:", size_hint_y=0.1, color=[0, 0, 0, 1])
@@ -213,6 +235,9 @@ class TypeSpecificContent(BoxLayout):
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
       self.add_widget(arch_input)
 
+class StatBubble(Widget):
+  stat = StringProperty()
+	  
 class RankDropdown(DropDown):
   def onSelect(self, btn_to_change, selected_rank):
     app = App.get_running_app()
