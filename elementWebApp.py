@@ -99,19 +99,22 @@ class NewElement(BoxLayout):
   parent_display_type = StringProperty()
   
   def addNewElementToWeb(self, text, type):
+    app = App.get_running_app()
+	
     # Assemble new element data based on where the NewElement button sits in the tree:
     if self.parent_display_type == 'flat':
       new_element_dict = {"name": text, "notes": "", "type": type}
       if new_element_dict["type"] == 'NPC':
         new_element_dict["rank"] = 'None'
-    self.parent.root_link.web_data.addElement(new_element_dict)
-    self.parent.root_link.web_data.save()
+    app.root.web_data.addElement(new_element_dict)
+    app.root.web_data.save()
     if self.parent_display_type =='flat':
       self.clear_widgets()
 	
     # Add the new element object to the parent
 	
   def nameNewElement(self):
+    app = App.get_running_app()
     self.clear_widgets()
     if self.parent_display_type == 'flat':
       # For new elements in the flat element display, add a text input and type select dropdown:
@@ -124,7 +127,7 @@ class NewElement(BoxLayout):
       dropdown = DropDown()
       
       # Populate dropdown with types from the web's meta_data:
-      for type in self.parent.root_link.web_data.meta_data["available_types"]:
+      for type in app.root.web_data.meta_data["available_types"]:
         btn = Button(text=type, size_hint_y=None, height=25)
         btn.bind(on_release=lambda btn: dropdown.select(btn.text))
         dropdown.add_widget(btn)
@@ -172,19 +175,21 @@ class ElementNotes(TextInput):
   
 class TypeSpecificContent(BoxLayout):
   def addTypeContent(self, type):
+    app = App.get_running_app()
     self.clear_widgets()
     if type == 'NPC':
       # Add a label to indicate what is being displayed:
-      rank_label = Label(text="NPC's rank:", size_hint_y=0.07, color=[0, 0, 0, 1])
+      rank_label = Label(text="NPC's rank:", size_hint_y=0.1, color=[0, 0, 0, 1])
       self.add_widget(rank_label)
+
       # Get the NPC's current rank:
-      sel_npc_rank = self.parent.root_link.selected_element.rank
+      sel_npc_rank = app.root.selected_element.rank
       	  
       # Add a drop down for the NPC's rank:
       dropdown = RankDropdown()
 	  
       # Populate dropdown with ranks from the web's meta_data:
-      for rank in self.parent.root_link.web_data.meta_data["npc_ranks"]:
+      for rank in app.root.web_data.meta_data["npc_ranks"]:
         btn = Button(text=rank, size_hint_y=None, height=25)
         btn.bind(on_release=lambda btn: dropdown.select(btn.text))
         dropdown.add_widget(btn)
