@@ -30,7 +30,9 @@ class elementData:
   def resynchronize(self):
     self.type = self.element_dict["type"]
     self.name = self.element_dict["name"]
-    self.notes = self.element_dict["notes"]    
+    self.notes = self.element_dict["notes"]
+    if self.type == 'NPC':
+      self.rank = self.element_dict["rank"]  	
 
 """
 The webData object essentially acts a database of elementData objects.

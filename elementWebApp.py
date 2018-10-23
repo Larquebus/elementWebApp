@@ -179,12 +179,11 @@ class TypeSpecificContent(BoxLayout):
       self.add_widget(rank_label)
       # Get the NPC's current rank:
       sel_npc_rank = self.parent.root_link.selected_element.rank
-      
-	  
+      	  
       # Add a drop down for the NPC's rank:
-      dropdown = DropDown()
+      dropdown = RankDropdown()
 	  
-      # Populate dropdown with types from the web's meta_data:
+      # Populate dropdown with ranks from the web's meta_data:
       for rank in self.parent.root_link.web_data.meta_data["npc_ranks"]:
         btn = Button(text=rank, size_hint_y=None, height=25)
         btn.bind(on_release=lambda btn: dropdown.select(btn.text))
@@ -197,7 +196,7 @@ class TypeSpecificContent(BoxLayout):
         displayed_rank = sel_npc_rank
       self.dropdown_btn = Button(text=displayed_rank, size_hint_y=0.1)
       self.dropdown_btn.bind(on_release=dropdown.open)
-      dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
+      dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(self.dropdown_btn, x))
 	  
       self.add_widget(self.dropdown_btn)
 	  
@@ -208,6 +207,12 @@ class TypeSpecificContent(BoxLayout):
       # Add the archetype textinput:
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
       self.add_widget(arch_input)
+
+class RankDropdown(DropDown):
+  def onSelect(self, btn_to_change, selected_rank):
+    app = App.get_running_app()
+    setattr(btn_to_change, 'text', selected_rank)
+    app.root.updateElement('rank', selected_rank)
   
 """
 Build the app:
