@@ -87,6 +87,7 @@ class Element(Button):
   element_data = ObjectProperty(None)
   element_name = StringProperty()
   details_link = ObjectProperty(None)
+  
   def selectElement(self):
     self.parent.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
@@ -108,6 +109,9 @@ class NewElement(BoxLayout):
       new_element_dict = {"name": text, "notes": "", "type": type}
       if new_element_dict["type"] == 'NPC':
         new_element_dict["rank"] = 'None'
+        new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
+      elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
+        new_element_dict["stats"] = {"Clout": 0}
     app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
     if self.parent_display_type =='flat':
@@ -189,8 +193,8 @@ class TypeSpecificContent(BoxLayout):
         # Create a widget to hold the bubble and label:
         stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
 		
-        # Grab the first (and only) item from the stats array and create a bubble for it:
-        stat_bubble = StatBubble(stat='d' + str(app.root.selected_element.stats[0]))
+        # Grab "Clout" from the stats dict and create a bubble for it:
+        stat_bubble = StatBubble(stat='d' + str(app.root.selected_element.stats["Clout"]))
         stat_holder.add_widget(stat_bubble)
         
 		# Add a Clout label:
@@ -200,7 +204,13 @@ class TypeSpecificContent(BoxLayout):
         stat_display.add_widget(stat_holder)
       elif type == 'NPC':
         alpha_stats = ["Charisma", "Intellect", "Reputation"]
-        stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
+		
+        # Check to see if the NPC has a rank yet:
+        if app.root.selected_element.rank == 'None':
+          stats_to_loop = [0, 0, 0]
+        else:
+          stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
+        
         rank_stats = stats_to_loop[3:]
 		
 		# First loop over the first 3 items in stats_to_loop to put them in alpha order:
@@ -210,7 +220,12 @@ class TypeSpecificContent(BoxLayout):
 		  
 		  # Get the high/medium/low (0/1/2) index of the current stat and create a bubble for it:
           stat_position = app.root.selected_element.stats[i]
-          stat_bubble = StatBubble(stat='d' + str(stats_to_loop[stat_position]))
+          stat_value = -1
+          if stat_position == -1:
+            stat_value = 0
+          else:
+            stat_value = stats_to_loop[stat_position]
+          stat_bubble = StatBubble(stat='d' + str(stat_value))
 		  
 		  # Add the appropriate stat label:
           stat_label = Label(text=i, color=[0, 0, 0, 1], size_hint_y=0.1)
@@ -235,6 +250,7 @@ class TypeSpecificContent(BoxLayout):
           stat_holder.add_widget(stat_label)
           
           stat_display.add_widget(stat_holder)
+
       # Add the finalized stat_display
       self.add_widget(stat_display)
 	  

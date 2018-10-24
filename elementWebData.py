@@ -35,7 +35,7 @@ class elementData:
     self.name = self.element_dict["name"]
     self.notes = self.element_dict["notes"]
     if self.type == 'NPC':
-      self.rank = self.element_dict["rank"]  	
+      self.rank = self.element_dict["rank"] 
 
 """
 The webData object essentially acts a database of elementData objects.
