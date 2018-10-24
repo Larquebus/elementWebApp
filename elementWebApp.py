@@ -112,6 +112,7 @@ class NewElement(BoxLayout):
         new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
       elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
         new_element_dict["stats"] = {"Clout": 0}
+        new_element_dict["clout"] = ""
     app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
     if self.parent_display_type =='flat':
@@ -181,9 +182,12 @@ class ElementNotes(TextInput):
   pass
   
 class TypeSpecificContent(BoxLayout):
+  
   def addTypeContent(self, type):
     app = App.get_running_app()
     self.clear_widgets()
+	
+	# Add stat display for appropriate types:
     if (type == 'NPC' or type == 'Faction' or type == 'Party'):
       stat_display = GridLayout(cols=8, size=self.size, pos=self.pos, size_hint_y=.6)
 
@@ -253,8 +257,19 @@ class TypeSpecificContent(BoxLayout):
 
       # Add the finalized stat_display
       self.add_widget(stat_display)
+
+	# Add other type specific displays:
+    if (type == 'Faction' or type == 'Party'):
+      # Add a label to indicate what is being displayed:
+      cause_label = Label(text="Cause:", size_hint_y=0.1, color=[0, 0, 0, 1])
+      self.add_widget(cause_label)
 	  
-    if type == 'NPC':
+      # Add a TextInput to store the Faction/Party's Cause:
+      cause_input = TextInput(text=app.root.selected_element.cause, size=self.size, pos=self.pos)
+      cause_input.bind(on_text=lambda cause_input: print('Text changed'))
+      self.add_widget(cause_input)
+	  
+    elif type == 'NPC':
       # Add a label to indicate what is being displayed:
       rank_label = Label(text="NPC's rank:", size_hint_y=0.1, color=[0, 0, 0, 1])
       self.add_widget(rank_label)
@@ -288,7 +303,7 @@ class TypeSpecificContent(BoxLayout):
 	  
       # Add the archetype textinput:
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
-      self.add_widget(arch_input)
+      self.add_widget(arch_input)	  
 
 class StatBubble(Widget):
   stat = StringProperty()

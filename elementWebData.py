@@ -26,6 +26,9 @@ class elementData:
     if (self.type == 'NPC' or self.type == 'Faction' or self.type == 'Party'):
       self.stats = self.element_dict["stats"]
 	  
+    if (self.type == 'Faction' or self.type == 'Party'):
+      self.cause = self.element_dict["cause"]
+	  
 #    if (self.type == 'player' or self.type == 'npc'):
 #     self.allies = dict["ally_ids"]
 #      self.enemies = dict["enemy_ids"]
@@ -36,7 +39,9 @@ class elementData:
     self.notes = self.element_dict["notes"]
     if self.type == 'NPC':
       self.rank = self.element_dict["rank"] 
-
+    if (self.type == 'Faction' or self.type == 'Party'): 
+      self.cause = self.element_dict["cause"]
+	  
 """
 The webData object essentially acts a database of elementData objects.
 """
