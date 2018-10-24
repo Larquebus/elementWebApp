@@ -83,7 +83,7 @@
 
 <StatBubble>:
 	size: 100, 100
-	pos: self.pos
+	center: self.center
 	size_hint: (None, None)
 	canvas.before:
 		Color:
@@ -140,6 +140,8 @@
 					pos: self.pos
 					orientation: 'tb-lr'
 					root_link: root
+					padding: 2
+					spacing: 2
 	ElementDetails:
 		id: element_details
 		pos: self.pos

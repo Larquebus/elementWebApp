@@ -181,22 +181,61 @@ class TypeSpecificContent(BoxLayout):
     app = App.get_running_app()
     self.clear_widgets()
     if (type == 'NPC' or type == 'Faction' or type == 'Party'):
-      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos)
+      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos, size_hint_y=.6)
 
-	  # Set up the stats to loop over when creating the stat grid based on the element's type:
-      if type == 'NPC':	
-        stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
-      else:
-        pass
+	  # Set up the stats to loop over (if needed) when creating the stat grid based on the 
+	  # element's type:
+      if (type == 'Faction' or type == 'Party'):
+        # Create a widget to hold the bubble and label:
+        stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
 		
-      for i in stats_to_loop:
-        if (type == 'Faction' or type == 'Party'):
-          pass
-          #stat_bubble = StatBubble(stat='d' + str(i))
-          #stat_display.add_widget(stat_bubble)
-        else:
+        # Grab the first (and only) item from the stats array and create a bubble for it:
+        stat_bubble = StatBubble(stat='d' + str(app.root.selected_element.stats[0]))
+        stat_holder.add_widget(stat_bubble)
+        
+		# Add a Clout label:
+        stat_label = Label(text='Clout', color=[0, 0, 0, 1])
+        stat_holder.add_widget(stat_label)
+		
+        stat_display.add_widget(stat_holder)
+      elif type == 'NPC':
+        alpha_stats = ["Charisma", "Intellect", "Reputation"]
+        stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
+        rank_stats = stats_to_loop[3:]
+		
+		# First loop over the first 3 items in stats_to_loop to put them in alpha order:
+        for i in alpha_stats:
+          # Create a widget to hold the bubble and label:
+          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
+		  
+		  # Get the high/medium/low (0/1/2) index of the current stat and create a bubble for it:
+          stat_position = app.root.selected_element.stats[i]
+          stat_bubble = StatBubble(stat='d' + str(stats_to_loop[stat_position]))
+		  
+		  # Add the appropriate stat label:
+          stat_label = Label(text=i, color=[0, 0, 0, 1], size_hint_y=0.1)
+		  
+		  # Add the bubble and then the label to the BoxLayout holder widget:
+          stat_holder.add_widget(stat_bubble)
+          stat_holder.add_widget(stat_label)
+		  
+          stat_display.add_widget(stat_holder)
+        
+		# Now loop over the remaining items in stats_to_loop (rank_stats):
+        for i in rank_stats:
+          # Create a widget to hold the bubble and a dummy label:
+          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
+		  
+		  # Add the stat bubble:
           stat_bubble = StatBubble(stat='d' + str(i))
-          stat_display.add_widget(stat_bubble)
+          stat_holder.add_widget(stat_bubble)
+		  
+		  # Add a dummy label:
+          stat_label = Label(text="Rank", color=[1, 1, 1, 1], size_hint_y=0.1)
+          stat_holder.add_widget(stat_label)
+          
+          stat_display.add_widget(stat_holder)
+      # Add the finalized stat_display
       self.add_widget(stat_display)
 	  
     if type == 'NPC':
