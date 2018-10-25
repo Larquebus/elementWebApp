@@ -62,6 +62,9 @@
 <ElementNotes>:
 	on_text: self.parent.parent.root_link.updateElement('notes', self.text)
 	
+<CauseInput>:
+	on_text: self.parent.parent.root_link.updateElement('cause', self.text)
+	
 <TypeSpecificContent>:
 	size: self.size
 	pos: self.pos
@@ -166,6 +169,7 @@
 		TypeSpecificContent:
 			id: type_content
 			orientation: 'vertical'
+			root_link: root
 
 			
 

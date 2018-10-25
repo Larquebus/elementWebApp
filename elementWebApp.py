@@ -126,7 +126,7 @@ class NewElement(BoxLayout):
     if self.parent_display_type == 'flat':
       # For new elements in the flat element display, add a text input and type select dropdown:
       # Add the text input:
-      self.name_request = NewElementInput(size_hint_y=1.1)
+      self.name_request = NewElementInput(size_hint_y=1.1, focus=True)
       self.add_widget(self.name_request)
       
 	  # Add the dropdown:
@@ -179,6 +179,18 @@ class ElementNotesFrame(Widget):
     self.element_notes.text = self.parent.root_link.selected_element.notes
 	
 class ElementNotes(TextInput):
+  pass
+  
+class StatBubble(Widget):
+  stat = StringProperty()
+	  
+class RankDropdown(DropDown):
+  def onSelect(self, btn_to_change, selected_rank):
+    app = App.get_running_app()
+    setattr(btn_to_change, 'text', selected_rank)
+    app.root.updateElement('rank', selected_rank)
+	
+class CauseInput(TextInput):
   pass
   
 class TypeSpecificContent(BoxLayout):
@@ -264,9 +276,8 @@ class TypeSpecificContent(BoxLayout):
       cause_label = Label(text="Cause:", size_hint_y=0.1, color=[0, 0, 0, 1])
       self.add_widget(cause_label)
 	  
-      # Add a TextInput to store the Faction/Party's Cause:
-      cause_input = TextInput(text=app.root.selected_element.cause, size=self.size, pos=self.pos)
-      cause_input.bind(on_text=lambda cause_input: print('Text changed'))
+      # Add a CauseInput to store the Faction/Party's Cause:
+      cause_input = CauseInput(text=app.root.selected_element.cause, size=self.size, pos=self.pos)
       self.add_widget(cause_input)
 	  
     elif type == 'NPC':
@@ -291,6 +302,7 @@ class TypeSpecificContent(BoxLayout):
         displayed_rank = 'Click to select rank'
       else:
         displayed_rank = sel_npc_rank
+
       self.dropdown_btn = Button(text=displayed_rank, size_hint_y=0.1)
       self.dropdown_btn.bind(on_release=dropdown.open)
       dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(self.dropdown_btn, x))
@@ -304,15 +316,6 @@ class TypeSpecificContent(BoxLayout):
       # Add the archetype textinput:
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
       self.add_widget(arch_input)	  
-
-class StatBubble(Widget):
-  stat = StringProperty()
-	  
-class RankDropdown(DropDown):
-  def onSelect(self, btn_to_change, selected_rank):
-    app = App.get_running_app()
-    setattr(btn_to_change, 'text', selected_rank)
-    app.root.updateElement('rank', selected_rank)
   
 """
 Build the app:
