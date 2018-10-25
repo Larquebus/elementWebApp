@@ -8,7 +8,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
 
@@ -56,7 +56,13 @@ class ElementDisplayWindow(Widget):
                              )
       flat_web.getFlatElements()
       self.flat_web_scroll.add_widget(flat_web)
-      self.add_widget(self.flat_web_scroll)	  
+      self.add_widget(self.flat_web_scroll)	
+    elif display_type == 'web':
+      initial_focus = app.root.web_data.elements[app.root.web_data.meta_data["last_id"]]
+      web_layout = ElementWeb(size=self.size, pos=self.pos, focus=initial_focus)
+      parent_region = WebRegion(size_hint_y=.3)
+      relation_region = WebRegion(size_hint_y=.3)
+      children_region = WebRegion(size_hint_y=.3)
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
@@ -71,13 +77,14 @@ class ElementFlat(StackLayout):
     counter = 0
     for e_id in self.root_link.web_data.elements:
       data = self.root_link.web_data.elements[e_id]
+      #color_array = self.root_link.web_data.type_colors_kivy[data.type]
       new_element = Element(id=e_id, 
                             element_data=data,
                             element_name=data.name,
-                            details_link=self.root_link.element_details							
+                            details_link=self.root_link.element_details,
+                            root_link=self.root_link
+                            #type_color=color_array							
                             )
-      color_array = self.root_link.web_data.type_colors_kivy[data.type] 
-      new_element.background_color=color_array
       self.add_widget(new_element)
       counter += 1
     print("Added %i elements to flat element display." % counter)
@@ -98,9 +105,17 @@ class Element(Button):
   element_data = ObjectProperty(None)
   element_name = StringProperty()
   details_link = ObjectProperty(None)
+  root_link = ObjectProperty(None)
+  type_color = ListProperty()
+  
+  def __init__(self, **kwargs):
+    super(Button, self).__init__(**kwargs)
+    #app = App.get_running_app()
+    #root_link = app.root
+    type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
   
   def selectElement(self):
-    self.parent.root_link.selected_element = self.element_data
+    self.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
     self.details_link.notes_container.activateElementNotes()
     self.details_link.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name

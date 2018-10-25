@@ -39,6 +39,9 @@
 	padding: 2
 	spacing: 2			
 
+<ElementWeb>:
+	orientation: vertical
+	
 <Element>:
 	size: len(self.element_name) * 10, 50
 	pos: self.pos
@@ -47,6 +50,7 @@
 	font_name: 'Arial'
 	on_press: self.selectElement()
 	background_normal: ''
+	background_color: self.type_color
 	color: [0, 0, 0, 1]
 	bold: True
 
