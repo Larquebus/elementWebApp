@@ -22,6 +22,23 @@
 		Rectangle:
 			size: self.size
 			pos: self.pos
+			
+<SearchAndSelect>:
+	search_input: search_input
+	results_tray: results_tray
+	orientation: 'vertical'
+	TextInput:
+		id: search_input
+		multiline: False
+		focus: True
+		on_text: self.parent.dynamicSearch(self.text)
+		size_hint_y: 0.2
+	BoxLayout:
+		id: results_tray
+		orientation: 'vertical'
+		size: self.size
+		pos: self.pos
+	
 
 <ElementDisplayWindow>:
 	size: self.parent.size

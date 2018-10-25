@@ -8,7 +8,7 @@ from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty, DictProperty
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
 
@@ -41,6 +41,24 @@ class ElementDisplay(BoxLayout):
 # A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
 class ElementDisplayBar(BoxLayout):
   detail_display_label = ObjectProperty(None)
+  
+# A search input and select widget, searches the entire web and when an Element is clicked, 
+# makes it the selected_element:
+class SearchAndSelect(BoxLayout):
+  search_results = DictProperty(None)
+  search_input = ObjectProperty(None)
+  results_tray = ObjectProperty(None)
+  
+  def dynamicSearch(self, search_str):
+    app = App.get_running_app()
+    self.results_tray.clear_widgets()
+    search_results = app.root.web_data.search(search_str)
+    for element in search_results:
+      data = search_results[element]
+      result_element = Element(element_data=data,
+                               element_name=element, 
+                               details_link=app.root.element_details)
+      self.results_tray.add_widget(result_element)
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -149,9 +167,6 @@ class NewElement(BoxLayout):
 	  
 class NewElementInput(TextInput):
   pass
-  
-#class NewElementDropdownBtn(Button):
-#  pass
   
 class NewElementDropdownList(DropDown):
   pass
