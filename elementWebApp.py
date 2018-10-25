@@ -36,7 +36,7 @@ Element Web itself.
 """
 # Holds the various ways of displaying Elements and the ElementDisplayBar:
 class ElementDisplay(BoxLayout):
-  pass
+  display_window = ObjectProperty(None)
   
 # A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
 class ElementDisplayBar(BoxLayout):
@@ -44,14 +44,25 @@ class ElementDisplayBar(BoxLayout):
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
-  pass
+  flat_web_scroll = ObjectProperty(None)
+  
+  def activateDisplay(self, display_type):
+    app = App.get_running_app()
+    if display_type == 'flat':
+      self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
+      flat_web = ElementFlat(root_link = app.root, 
+                             size=self.flat_web_scroll.size,
+                             pos=self.flat_web_scroll.pos
+                             )
+      flat_web.getFlatElements()
+      self.flat_web_scroll.add_widget(flat_web)
+      self.add_widget(self.flat_web_scroll)	  
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
-  pass
+  flat_web = ObjectProperty(None)
   
 class ElementFlat(StackLayout):
-  web_to_display = ObjectProperty(None)
   root_link = ObjectProperty(None)
   
   # Loops through all Elements in the Web and adds them to the ScrollView:
