@@ -78,12 +78,9 @@ class ElementFlat(StackLayout):
     for e_id in self.root_link.web_data.elements:
       data = self.root_link.web_data.elements[e_id]
       #color_array = self.root_link.web_data.type_colors_kivy[data.type]
-      new_element = Element(id=e_id, 
-                            element_data=data,
-                            element_name=data.name,
+      new_element = Element(element_data=data,
                             details_link=self.root_link.element_details,
-                            root_link=self.root_link
-                            #type_color=color_array							
+                            root_link=self.root_link					
                             )
       self.add_widget(new_element)
       counter += 1
@@ -104,22 +101,34 @@ class Element(Button):
   element_key = StringProperty()
   element_data = ObjectProperty(None)
   element_name = StringProperty()
-  details_link = ObjectProperty(None)
-  root_link = ObjectProperty(None)
   type_color = ListProperty()
+  
+  # Various objects designed to hold links to other widgets in the app that all Elements
+  # need to be able to alter:
+  root_link = ObjectProperty(None) # Used to access web meta_data.
+  details_link = ObjectProperty(None) # Used to set up the next three links.
+  notes_container_link = ObjectProperty(None) # Used to supply selected element notes.
+  display_label_link = ObjectProperty(None) # Used to supply what element is selected.
+  type_content_link = ObjectProperty(None) # Used to supply type-specifc content.  
   
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
     #app = App.get_running_app()
     #root_link = app.root
-    type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+    self.element_name = self.element_data.name
+    self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+
+    # Set up links:
+    self.notes_container_link = self.details_link.notes_container
+    self.display_label_link = self.details_link.detail_display_bar.detail_display_label
+    self.type_content_link = self.details_link.type_content
   
   def selectElement(self):
     self.root_link.selected_element = self.element_data
     print('Selected ' + self.element_data.name)
-    self.details_link.notes_container.activateElementNotes()
-    self.details_link.detail_display_bar.detail_display_label.text = 'Currently selected: ' + self.element_name
-    self.details_link.type_content.addTypeContent(self.element_data.type)
+    self.notes_container_link.activateElementNotes()
+    self.display_label_link.text = 'Currently selected: ' + self.element_name
+    self.type_content_link.addTypeContent(self.element_data.type)
 	
 class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
