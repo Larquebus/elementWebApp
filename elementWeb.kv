@@ -40,11 +40,50 @@
 	spacing: 2			
 
 <ElementWeb>:
-	orientation: vertical
+	orientation: 'vertical'
+	
+	parent_region: parent_region
+	
+	relation_region: relation_region
+	# Sub regions of relation_region:
+	enemies_region: enemies_region
+	focus_region: focus_region
+	allies_region: allies_region
+	
+	child_region: child_region
+	
+	WebRegion:
+		id: parent_region
+		orientation: 'vertical'
+	WebRegion:
+		id: relation_region
+		orientation: 'horizontal'
+		WebRegion:
+			id: enemies_region
+			orientation: 'vertical'
+		FloatLayout:
+			id: focus_region
+			pos: self.pos
+			size: self.size
+			canvas:
+				Color:
+					rgba: [1, 0, 0, 1]
+				Rectangle:
+					pos: self.pos
+					size: self.size
+		WebRegion:
+			id: allies_region
+			orientation: 'vertical'
+	WebRegion:
+		id: child_region
+		orientation: 'horizontal'
+		
+<WebRegion>:
+	size_hint_y: .3
 	
 <Element>:
 	size: len(self.element_name) * 10, 50
-	pos: self.pos
+#	pos: self.pos
 	size_hint: (None, None)
 	text: self.element_name
 	font_name: 'Arial'
@@ -135,6 +174,7 @@
 				size: self.size
 				pos: self.pos
 				text: 'Display Web'
+				on_press: self.parent.parent.display_window.activateDisplay('web')
 			Button:
 				id: display_all_button
 				size: self.size
@@ -143,7 +183,6 @@
 				on_press: self.parent.parent.display_window.activateDisplay('flat')
 		ElementDisplayWindow:
 			id: display_window
-
 	ElementDetails:
 		id: element_details
 		pos: self.pos
@@ -155,12 +194,12 @@
 		type_content: type_content
 		ElementDisplayBar:
 			id: detail_display_bar
-			size_hint_y: .03
+			size_hint_y: .06
 			detail_display_label: detail_display_label
 			Label:
 				id: detail_display_label
 				size: self.parent.size
-				pos: self.parent.pos
+				pos: 0, self.parent.center_y
 				text: 'Currently selected: '
 				color: [0, 0, 0, 1]
 		ElementNotesFrame:

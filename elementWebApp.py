@@ -6,6 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
@@ -45,6 +46,7 @@ class ElementDisplayBar(BoxLayout):
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
   flat_web_scroll = ObjectProperty(None)
+  web_layout = ObjectProperty(None)
   
   def activateDisplay(self, display_type):
     app = App.get_running_app()
@@ -58,11 +60,13 @@ class ElementDisplayWindow(Widget):
       self.flat_web_scroll.add_widget(flat_web)
       self.add_widget(self.flat_web_scroll)	
     elif display_type == 'web':
-      initial_focus = app.root.web_data.elements[app.root.web_data.meta_data["last_id"]]
-      web_layout = ElementWeb(size=self.size, pos=self.pos, focus=initial_focus)
-      parent_region = WebRegion(size_hint_y=.3)
-      relation_region = WebRegion(size_hint_y=.3)
-      children_region = WebRegion(size_hint_y=.3)
+      initial_focus = app.root.web_data.elements['e' + str(app.root.web_data.meta_data["last_id"])]
+      self.web_layout = ElementWeb(size=self.size, 
+                                   pos=self.pos, 
+                                   focus=initial_focus,
+                                   root_link=app.root)
+      self.add_widget(self.web_layout)
+      self.web_layout.getElementWeb()
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
@@ -90,7 +94,32 @@ class ElementFlat(StackLayout):
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
-  focus = ObjectProperty()
+  root_link = ObjectProperty(None)
+  focus = ObjectProperty(None)
+  
+  parent_region = ObjectProperty(None)
+  
+  relation_region = ObjectProperty(None)
+  # Sub regions of relation_region:
+  enemies_region = ObjectProperty(None)
+  focus_region = ObjectProperty(None)
+  allies_region = ObjectProperty(None)
+  
+  child_region = ObjectProperty(None)
+  
+  def getElementWeb(self):
+    self.parent_region.clear_widgets()
+    self.enemies_region.clear_widgets()
+    self.focus_region.clear_widgets()
+    self.allies_region.clear_widgets()
+    self.child_region.clear_widgets()
+    focus_element = Element(element_data=self.focus,
+                            pos=self.focus_region.pos,
+                            root_link=self.root_link,
+                            details_link=self.root_link.element_details
+                            #center=self.relation_region.center
+                            )
+    self.focus_region.add_widget(focus_element)
 
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(BoxLayout):
@@ -183,12 +212,6 @@ class NewElement(BoxLayout):
       self.add_widget(self.dropdown_btn)
 	  
 class NewElementInput(TextInput):
-  pass
-  
-#class NewElementDropdownBtn(Button):
-#  pass
-  
-class NewElementDropdownList(DropDown):
   pass
   
 """
