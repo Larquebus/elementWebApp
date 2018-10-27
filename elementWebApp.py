@@ -6,7 +6,7 @@ from kivy.uix.button import Button
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
-from kivy.uix.floatlayout import FloatLayout
+from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
@@ -50,6 +50,7 @@ class ElementDisplayWindow(Widget):
   
   def activateDisplay(self, display_type):
     app = App.get_running_app()
+    self.clear_widgets()
     if display_type == 'flat':
       self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
       flat_web = ElementFlat(root_link = app.root, 
@@ -81,7 +82,6 @@ class ElementFlat(StackLayout):
     counter = 0
     for e_id in self.root_link.web_data.elements:
       data = self.root_link.web_data.elements[e_id]
-      #color_array = self.root_link.web_data.type_colors_kivy[data.type]
       new_element = Element(element_data=data,
                             details_link=self.root_link.element_details,
                             root_link=self.root_link					
@@ -94,7 +94,7 @@ class ElementFlat(StackLayout):
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
-  root_link = ObjectProperty(None)
+  root_link = ObjectProperty(None)  
   focus = ObjectProperty(None)
   
   parent_region = ObjectProperty(None)
@@ -114,12 +114,12 @@ class ElementWeb(BoxLayout):
     self.allies_region.clear_widgets()
     self.child_region.clear_widgets()
     focus_element = Element(element_data=self.focus,
-                            pos=self.focus_region.pos,
                             root_link=self.root_link,
                             details_link=self.root_link.element_details
-                            #center=self.relation_region.center
                             )
     self.focus_region.add_widget(focus_element)
+	
+
 
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(BoxLayout):

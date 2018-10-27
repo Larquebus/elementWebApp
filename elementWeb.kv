@@ -54,26 +54,22 @@
 	
 	WebRegion:
 		id: parent_region
-		orientation: 'vertical'
+		orientation: 'vertical'	
 	WebRegion:
 		id: relation_region
 		orientation: 'horizontal'
 		WebRegion:
 			id: enemies_region
 			orientation: 'vertical'
-		FloatLayout:
+			size_hint_y: 1		
+		AnchorLayout:
 			id: focus_region
-			pos: self.pos
-			size: self.size
-			canvas:
-				Color:
-					rgba: [1, 0, 0, 1]
-				Rectangle:
-					pos: self.pos
-					size: self.size
+			anchor_x: 'center'
+			anchor_y: 'center'
 		WebRegion:
 			id: allies_region
 			orientation: 'vertical'
+			size_hint_y: 1	
 	WebRegion:
 		id: child_region
 		orientation: 'horizontal'
@@ -83,7 +79,6 @@
 	
 <Element>:
 	size: len(self.element_name) * 10, 50
-#	pos: self.pos
 	size_hint: (None, None)
 	text: self.element_name
 	font_name: 'Arial'
