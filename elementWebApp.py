@@ -9,7 +9,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
-<<<<<<< HEAD
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty, DictProperty
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
