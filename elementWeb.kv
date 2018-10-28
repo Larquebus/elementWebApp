@@ -28,19 +28,19 @@
 	search_input: search_input
 	results_tray: results_tray
 	orientation: 'vertical'
+	canvas:	
+		Color:
+			rgba: [1, 0, 0, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
 	TextInput:
 		id: search_input
 		multiline: False
-		focus: True
 		on_text: self.parent.dynamicSearch(self.text)
-		size_hint_y: 0.2
 	ScrollView:
 		do_scroll_x: False
-		BoxLayout:
-			id: results_tray
-			orientation: 'vertical'
-			size: self.size
-			pos: self.pos
+		id: results_tray
 	
 
 <ElementDisplayWindow>:
@@ -62,40 +62,46 @@
 <ElementWeb>:
 	orientation: 'vertical'
 	
-	parent_region: parent_region
+	parent_layout: parent_layout
 	
-	relation_region: relation_region
-	# Sub regions of relation_region:
-	enemies_region: enemies_region
+	relation_layout: relation_layout
+	# Sub layouts of relation_layout:
+	enemies_layout: enemies_layout
 	focus_region: focus_region
-	allies_region: allies_region
+	allies_layout: allies_layout
 	
-	child_region: child_region
+	child_layout: child_layout
 	
 	WebRegion:
-		id: parent_region
-		orientation: 'vertical'	
+		BoxLayout:
+			id: parent_layout
+			size_hint: None, None
+			orientation: 'vertical'	
 	WebRegion:
-		id: relation_region
-		orientation: 'horizontal'
-		WebRegion:
-			id: enemies_region
-			orientation: 'vertical'
-			size_hint_y: 1		
-		AnchorLayout:
-			id: focus_region
-			anchor_x: 'center'
-			anchor_y: 'center'
-		WebRegion:
-			id: allies_region
-			orientation: 'vertical'
-			size_hint_y: 1	
+		BoxLayout:
+			id: relation_layout
+			orientation: 'horizontal'
+			WebRegion:
+				BoxLayout:
+					id: enemies_layout
+					size_hint: None, None
+					orientation: 'vertical'	
+			WebRegion:
+				id: focus_region
+			WebRegion:
+				BoxLayout:
+					id: allies_layout
+					size_hint: None, None
+					orientation: 'vertical'
 	WebRegion:
-		id: child_region
-		orientation: 'horizontal'
+		BoxLayout:
+			id: child_layout
+			size_hint: None, None
+			orientation: 'horizontal'
 		
 <WebRegion>:
-	size_hint_y: .3
+	anchor_x: 'center'
+	anchor_y: 'center'
 	
 <Element>:
 	size: len(self.element_name) * 10, 50
@@ -135,9 +141,6 @@
 		font_size: 14
 		text: "Link Element..."
 		on_press: self.parent.linkNewElement()
-	BoxLayout:
-		id: search_results
-		orientation: 'vertical'
 		
 <LinkElementInput>:
 	multiline: False

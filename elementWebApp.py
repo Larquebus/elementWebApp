@@ -7,6 +7,7 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
+from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty, DictProperty
@@ -56,7 +57,7 @@ class SearchAndSelect(BoxLayout):
     search_results = app.root.web_data.search(search_str)
     for element in search_results:
       data = search_results[element]
-      result_label = Label(text=element, color=[0, 0, 0, 1], halign='left')
+      result_label = Label(text=element, color=[0, 0, 0, 1])
       self.results_tray.add_widget(result_label)
   
 # A window of display formats resulting from ElementDisplayBar selections:
@@ -113,22 +114,22 @@ class ElementWeb(BoxLayout):
   root_link = ObjectProperty(None)  
   focus = ObjectProperty(None)
   
-  parent_region = ObjectProperty(None)
+  parent_layout = ObjectProperty(None)
   
-  relation_region = ObjectProperty(None)
-  # Sub regions of relation_region:
-  enemies_region = ObjectProperty(None)
+  relation_layout = ObjectProperty(None)
+  # Sub layouts of relation_layout:
+  enemies_layout = ObjectProperty(None)
   focus_region = ObjectProperty(None)
-  allies_region = ObjectProperty(None)
+  allies_layout = ObjectProperty(None)
   
-  child_region = ObjectProperty(None)
+  child_layout = ObjectProperty(None)
   
   def getElementWeb(self):
-    self.parent_region.clear_widgets()
-    self.enemies_region.clear_widgets()
+    self.parent_layout.clear_widgets()
+    self.enemies_layout.clear_widgets()
     self.focus_region.clear_widgets()
-    self.allies_region.clear_widgets()
-    self.child_region.clear_widgets()
+    self.allies_layout.clear_widgets()
+    self.child_layout.clear_widgets()
     focus_element = Element(element_data=self.focus,
                             root_link=self.root_link,
                             details_link=self.root_link.element_details
@@ -136,23 +137,23 @@ class ElementWeb(BoxLayout):
     self.focus_region.add_widget(focus_element)
 	
 	# Add parents to web:
-    parent_anchor = AnchorLayout(anchor_x='center', anchor_y='center')
     parent_linker = LinkElement()
-    parent_anchor.add_widget(parent_linker)
-    self.parent_region.add_widget(parent_anchor)
+    self.parent_layout.add_widget(parent_linker)
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
       enemy_linker = LinkElement()
-      self.enemies_region.add_widget(enemy_linker)
+      self.enemies_layout.add_widget(enemy_linker)
 
       ally_linker = LinkElement()
-      self.allies_region.add_widget(ally_linker)
+      self.allies_layout.add_widget(ally_linker)
 	  
     # Add children to the web:
+    child_linker = LinkElement()
+    self.child_layout.add_widget(child_linker)
 
 # Used to block out the sub-regions of the ElementWeb window:
-class WebRegion(BoxLayout):
+class WebRegion(AnchorLayout):
   pass
   
 # All visible widgets in the ElementWeb and ElementFlat are Elements of various types.
@@ -251,8 +252,10 @@ class LinkElement(BoxLayout):
   def linkNewElement(self):
     app = App.get_running_app()
     self.remove_widget(self.link_button)
-    self.search_input = LinkElementInput(size_hint_y=1.1)
-    self.add_widget(self.search_input)
+    float_holder = FloatLayout(size=(500, 500), center=Window.center)
+    self.search_input = SearchAndSelect()
+    float_holder.add_widget(self.search_input)
+    self.add_widget(float_holder)
   
 class LinkElementInput(TextInput):
   pass
