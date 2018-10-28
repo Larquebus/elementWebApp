@@ -55,10 +55,8 @@ class SearchAndSelect(BoxLayout):
     search_results = app.root.web_data.search(search_str)
     for element in search_results:
       data = search_results[element]
-      result_element = Element(element_data=data,
-                               element_name=element, 
-                               details_link=app.root.element_details)
-      self.results_tray.add_widget(result_element)
+      result_label = Label(text=element, color=[0, 0, 0, 1], halign='left')
+      self.results_tray.add_widget(result_label)
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):

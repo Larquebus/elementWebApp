@@ -33,11 +33,13 @@
 		focus: True
 		on_text: self.parent.dynamicSearch(self.text)
 		size_hint_y: 0.2
-	BoxLayout:
-		id: results_tray
-		orientation: 'vertical'
-		size: self.size
-		pos: self.pos
+	ScrollView:
+		do_scroll_x: False
+		BoxLayout:
+			id: results_tray
+			orientation: 'vertical'
+			size: self.size
+			pos: self.pos
 	
 
 <ElementDisplayWindow>:
