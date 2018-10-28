@@ -1,5 +1,6 @@
 #:kivy 1.10.1
 
+# These widgets comprise the left hand side of the window, and involve displaying elements:
 <ElementDisplay>:
 	orientation: 'vertical'
 	size: self.parent.size
@@ -87,7 +88,42 @@
 	background_color: self.type_color
 	color: [0, 0, 0, 1]
 	bold: True
+	
+<NewElement>:
+	size: 200, 50
+	pos: self.pos
+	size_hint: (None, None)
+	orientation: 'vertical'
+	Button:
+		font_name: 'Arial'
+		font_size: 14
+		text: "Click to Add New Element"
+		on_press: self.parent.nameNewElement()
+	
+<NewElementInput>:
+	multiline: False
+	on_text_validate: self.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
+	
+<LinkElement>:
+	size: 125, 50
+	pos: self.pos
+	size_hint: (None, None)
+	orientation: 'vertical'
+	link_button: link_button
+	Button:
+		id: link_button
+		font_name: 'Arial'
+		font_size: 14
+		text: "Link Element..."
+		on_press: self.parent.linkNewElement()
+	BoxLayout:
+		id: search_results
+		orientation: 'vertical'
+		
+<LinkElementInput>:
+	multiline: False
 
+# These widgets comprise the right hand side of the window, and involve displaying element details:
 <ElementDetails>:
 	size: self.parent.size
 	pos: self.parent.pos
@@ -112,21 +148,6 @@
 	size: self.size
 	pos: self.pos
 	
-<NewElement>:
-	size: 200, 50
-	pos: self.pos
-	size_hint: (None, None)
-	orientation: 'vertical'
-	Button:
-		font_name: 'Arial'
-		font_size: 14
-		text: "Click to Add New Element"
-		on_press: self.parent.nameNewElement()
-	
-<NewElementInput>:
-	multiline: False
-	on_text_validate: self.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
-
 <StatBubble>:
 	size: 100, 100
 	center: self.center
@@ -146,8 +167,9 @@
 	Label:
 		text: self.parent.stat
 		color: [0, 0, 0, 1]
-		pos: self.parent.pos
-	
+		pos: self.parent.pos	
+
+# Build the widget tree:	
 <AppFrame>:
 	id: app_
 	orientation: 'horizontal'

@@ -119,7 +119,21 @@ class ElementWeb(BoxLayout):
                             )
     self.focus_region.add_widget(focus_element)
 	
+	# Add parents to web:
+    parent_anchor = AnchorLayout(anchor_x='center', anchor_y='center')
+    parent_linker = LinkElement()
+    parent_anchor.add_widget(parent_linker)
+    self.parent_region.add_widget(parent_anchor)
 
+    # Add enemies and allies to web:
+    if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
+      enemy_linker = LinkElement()
+      self.enemies_region.add_widget(enemy_linker)
+
+      ally_linker = LinkElement()
+      self.allies_region.add_widget(ally_linker)
+	  
+    # Add children to the web:
 
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(BoxLayout):
@@ -190,7 +204,7 @@ class NewElement(BoxLayout):
     if self.parent_display_type == 'flat':
       # For new elements in the flat element display, add a text input and type select dropdown:
       # Add the text input:
-      self.name_request = NewElementInput(size_hint_y=1.1, focus=True)
+      self.name_request = NewElementInput(size_hint_y=1.1)
       self.add_widget(self.name_request)
       
 	  # Add the dropdown:
@@ -212,6 +226,19 @@ class NewElement(BoxLayout):
       self.add_widget(self.dropdown_btn)
 	  
 class NewElementInput(TextInput):
+  pass
+  
+class LinkElement(BoxLayout):
+  link_button = ObjectProperty(None)
+  search_input = ObjectProperty(None)
+  
+  def linkNewElement(self):
+    app = App.get_running_app()
+    self.remove_widget(self.link_button)
+    self.search_input = LinkElementInput(size_hint_y=1.1)
+    self.add_widget(self.search_input)
+  
+class LinkElementInput(TextInput):
   pass
   
 """
