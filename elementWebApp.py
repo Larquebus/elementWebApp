@@ -9,7 +9,8 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty
+<<<<<<< HEAD
+from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty, DictProperty
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
 
@@ -42,6 +43,22 @@ class ElementDisplay(BoxLayout):
 # A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
 class ElementDisplayBar(BoxLayout):
   detail_display_label = ObjectProperty(None)
+  
+# A search input and select widget, searches the entire web and when an Element is clicked, 
+# makes it the selected_element:
+class SearchAndSelect(BoxLayout):
+  search_results = DictProperty(None)
+  search_input = ObjectProperty(None)
+  results_tray = ObjectProperty(None)
+  
+  def dynamicSearch(self, search_str):
+    app = App.get_running_app()
+    self.results_tray.clear_widgets()
+    search_results = app.root.web_data.search(search_str)
+    for element in search_results:
+      data = search_results[element]
+      result_label = Label(text=element, color=[0, 0, 0, 1], halign='left')
+      self.results_tray.add_widget(result_label)
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -240,6 +257,7 @@ class LinkElement(BoxLayout):
   
 class LinkElementInput(TextInput):
   pass
+
   
 """
 These widgets make up the right hand window of the application, which shows notes and other details 

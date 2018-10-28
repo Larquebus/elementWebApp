@@ -99,6 +99,8 @@ class webData:
   # This method searches the names of elements and returns a dictionary with matches:
   def search(self, search_str):
     results = {}
+    if search_str == '':
+      return results
     for element in self.elements:
       check = re.search(search_str.lower(), self.elements[element].name.lower())
       if check:
