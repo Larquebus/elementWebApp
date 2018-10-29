@@ -17,7 +17,7 @@ from kivy.graphics import BorderImage
 from elementWebData import *
 
 # The core of the application. When initialized it taps into the web data file:
-class AppFrame(BoxLayout):
+class AppFrame(Widget):
   web_data = ObjectProperty(webData())
   selected_element = ObjectProperty(None)
   focus_object = ObjectProperty(None)
@@ -46,19 +46,43 @@ class ElementDisplayBar(BoxLayout):
   
 # A search input and select widget, searches the entire web and when an Element is clicked, 
 # makes it the selected_element:
-class SearchAndSelect(BoxLayout):
+class SearchAndSelect(FloatLayout):
+  search_pos = ListProperty(None)
+  search_size = ListProperty(None)
   search_results = DictProperty(None)
   search_input = ObjectProperty(None)
+  results_anchor = ObjectProperty(None)
   results_tray = ObjectProperty(None)
+  num_results = NumericProperty(0)
   
   def dynamicSearch(self, search_str):
     app = App.get_running_app()
     self.results_tray.clear_widgets()
     search_results = app.root.web_data.search(search_str)
+    self.num_results = len(search_results)
     for element in search_results:
-      data = search_results[element]
-      result_label = Label(text=element, color=[0, 0, 0, 1])
-      self.results_tray.add_widget(result_label)
+      data = app.root.web_data.elements[search_results[element]]
+      result = SearchResultBtn(element_data=data,
+                               root_link=app.root,
+                               text=element,
+                               parent_link=self)
+      self.results_tray.add_widget(result)
+	  
+  def on_num_results(self, *args):
+    self.results_anchor.size = self.x, self.num_results * 25
+
+class SearchResultBtn(Button):
+  element_data = ObjectProperty(None)
+  type_color = ListProperty(None)
+  root_link = ObjectProperty(None)
+  parent_link = ObjectProperty(None)
+  
+  def __init__(self, **kwargs):
+    super(Button, self).__init__(**kwargs)
+    self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+	
+  def selectSearchResult(self):
+    self.parent_link.clear_widgets()
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -173,8 +197,6 @@ class Element(Button):
   
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
-    #app = App.get_running_app()
-    #root_link = app.root
     self.element_name = self.element_data.name
     self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
 
@@ -251,11 +273,12 @@ class LinkElement(BoxLayout):
   
   def linkNewElement(self):
     app = App.get_running_app()
+    self.search_input = SearchAndSelect(size=app.root.size, 
+                                        search_pos=(self.x, self.y-150), 
+                                        search_size=[250,200]
+                                        )
     self.remove_widget(self.link_button)
-    float_holder = FloatLayout(size=(500, 500), center=Window.center)
-    self.search_input = SearchAndSelect()
-    float_holder.add_widget(self.search_input)
-    self.add_widget(float_holder)
+    app.root.add_widget(self.search_input)
   
 class LinkElementInput(TextInput):
   pass

@@ -27,22 +27,47 @@
 <SearchAndSelect>:
 	search_input: search_input
 	results_tray: results_tray
-	orientation: 'vertical'
-	canvas:	
-		Color:
-			rgba: [1, 0, 0, 1]
-		Rectangle:
-			size: self.size
-			pos: self.pos
-	TextInput:
-		id: search_input
-		multiline: False
-		on_text: self.parent.dynamicSearch(self.text)
-	ScrollView:
-		do_scroll_x: False
-		id: results_tray
+	results_anchor: results_anchor
 	
-
+	BoxLayout:
+		orientation: 'vertical'	
+		pos: root.search_pos
+		size: root.search_size
+		size_hint: None, None
+		TextInput:
+			id: search_input
+			multiline: False
+			size_hint_y: .2
+			on_text: root.dynamicSearch(self.text)
+		ScrollView:
+			do_scroll_x: False
+			pos: self.pos
+			scroll_y: 1
+			canvas:
+				Color:
+					rgba: [0, 0, 0, .05]
+				Rectangle:
+					size: self.size
+					pos: self.pos
+			AnchorLayout:
+				id: results_anchor
+				anchor_x: 'left'
+				anchor_y: 'top'
+				size_hint_y: None
+				size: root.x, root.num_results * 25
+				BoxLayout:
+					id: results_tray
+					orientation: 'vertical'
+					size_hint: 1, None
+					size: self.parent.size
+					
+<SearchResultBtn>:
+	size_hint_y: None
+	height: 25
+	color: [0, 0, 0, 1]
+	background_normal: ''
+	background_color: self.type_color
+	
 <ElementDisplayWindow>:
 	size: self.parent.size
 	pos: self.parent.pos 
@@ -194,59 +219,62 @@
 # Build the widget tree:	
 <AppFrame>:
 	id: app_
-	orientation: 'horizontal'
 	size: root.size
 	pos: root.pos
 	web: self.web_data
 	element_details: element_details
 	element_display: display
 	
-	ElementDisplay:
-		id: display
-		size_hint: 1.3, 1
-		display_window: display_window
-		ElementDisplayBar:
-			id: display_bar
-			size_hint_y: .03
-			Button:
-				id: display_web_button
-				size: self.size
-				pos: self.pos
-				text: 'Display Web'
-				on_press: self.parent.parent.display_window.activateDisplay('web')
-			Button:
-				id: display_all_button
-				size: self.size
-				pos: self.pos
-				text: 'Display All Elements'
-				on_press: self.parent.parent.display_window.activateDisplay('flat')
-		ElementDisplayWindow:
-			id: display_window
-	ElementDetails:
-		id: element_details
-		pos: self.pos
-		size: self.size
-		orientation: 'vertical'
-		root_link: root
-		detail_display_bar: detail_display_bar
-		notes_container: notes_container
-		type_content: type_content
-		ElementDisplayBar:
-			id: detail_display_bar
-			size_hint_y: .06
-			detail_display_label: detail_display_label
-			Label:
-				id: detail_display_label
-				size: self.parent.size
-				pos: 0, self.parent.center_y
-				text: 'Currently selected: '
-				color: [0, 0, 0, 1]
-		ElementNotesFrame:
-			id: notes_container
-		TypeSpecificContent:
-			id: type_content
+	BoxLayout:
+		orientation: 'horizontal'
+		size: self.parent.size
+		pos: self.parent.pos
+		ElementDisplay:
+			id: display
+			size_hint: 1.3, 1
+			display_window: display_window
+			ElementDisplayBar:
+				id: display_bar
+				size_hint_y: .03
+				Button:
+					id: display_web_button
+					size: self.size
+					pos: self.pos
+					text: 'Display Web'
+					on_press: self.parent.parent.display_window.activateDisplay('web')
+				Button:
+					id: display_all_button
+					size: self.size
+					pos: self.pos
+					text: 'Display All Elements'
+					on_press: self.parent.parent.display_window.activateDisplay('flat')
+			ElementDisplayWindow:
+				id: display_window
+		ElementDetails:
+			id: element_details
+			pos: self.pos
+			size: self.size
 			orientation: 'vertical'
 			root_link: root
+			detail_display_bar: detail_display_bar
+			notes_container: notes_container
+			type_content: type_content
+			ElementDisplayBar:
+				id: detail_display_bar
+				size_hint_y: .06
+				detail_display_label: detail_display_label
+				Label:
+					id: detail_display_label
+					size: self.parent.size
+					pos: 0, self.parent.center_y
+					text: 'Currently selected: '
+					color: [0, 0, 0, 1]
+			ElementNotesFrame:
+				id: notes_container
+			TypeSpecificContent:
+				id: type_content
+				orientation: 'vertical'
+				root_link: root
 
 			
 
