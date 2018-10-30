@@ -19,19 +19,47 @@ class elementData:
     self.type = self.element_dict["type"]
     self.name = self.element_dict["name"]
     self.notes = self.element_dict["notes"]
+    
+    # Make sure the element_dict has a "parents" list and add one if it doesn't:
+    try:
+      self.parents = self.element_dict["parents"]
+    except KeyError:
+      self.element_dict["parents"] = []
+      self.parents = self.element_dict["parents"]
+
+    # Make sure the element_dict has a "children" list and add one if it doesn't:
+    try:
+      self.children = self.element_dict["children"]
+    except KeyError:
+      self.element_dict["children"] = []
+      self.children = self.element_dict["children"]
 	
     if self.type == 'NPC':
       self.rank = self.element_dict["rank"]
 	  
+    # Only NPCs, Factions, and Parties have stats:
     if (self.type == 'NPC' or self.type == 'Faction' or self.type == 'Party'):
       self.stats = self.element_dict["stats"]
-	  
+	
+    # Only Factions and Parties have causes:
     if (self.type == 'Faction' or self.type == 'Party'):
       self.cause = self.element_dict["cause"]
-	  
-#    if (self.type == 'player' or self.type == 'npc'):
-#     self.allies = dict["ally_ids"]
-#      self.enemies = dict["enemy_ids"]
+
+    # For Player and NPC elements, set up allies and enemies attributes:
+    if (self.type == 'Player' or self.type == 'NPC'):
+      # Make sure the element_dict has an "allies" list and add one if it doesn't:
+      try:
+        self.allies = self.element_dict["allies"]
+      except KeyError:
+        self.element_dict["allies"] = []
+        self.allies = self.element_dict["allies"]
+
+      # Make sure the element_dict has an "enemies" list and add one if it doesn't:
+      try:
+        self.enemies = self.element_dict["enemies"]
+      except KeyError:
+        self.element_dict["enemies"] = []
+        self.enemies = self.element_dict["enemies"]
 	
   def resynchronize(self):
     self.type = self.element_dict["type"]
