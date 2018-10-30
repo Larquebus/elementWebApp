@@ -210,16 +210,43 @@ class ElementWeb(BoxLayout):
     self.focus_region.add_widget(focus_element)
 	
 	# Add parents to web:
-    try:
-      for id in self.focus.parents:
+    for id in self.focus.parents:
+      parent_data = self.root_link.web_data.elements['e' + str(id)]
+      parent_el = Element(element_data=parent_data,
+                          root_link=self.root_link,
+                          details_link=self.root_link.element_details
+                          )
+      self.parent_layout.add_widget(parent_el)
+	  
+    # Add LinkElement button so new parents can be added:
     parent_linker = LinkElement(linker_type='parents')
     self.parent_layout.add_widget(parent_linker)
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
+      # Add enemies:
+      for id in self.focus.enemies:
+        enemy_data = self.root_link.web_data.elements['e' + str(id)]
+        enemy_el = Element(element_data=enemy_data,
+                            root_link=self.root_link,
+                            details_link=self.root_link.element_details
+                            )
+        self.enemies_layout.add_widget(enemy_el)	
+
+      # Add LinkElement button so new enemies can be added:
       enemy_linker = LinkElement(linker_type='enemies')
       self.enemies_layout.add_widget(enemy_linker)
 
+      # Add allies:
+      for id in self.focus.allies:
+        ally_data = self.root_link.web_data.elements['e' + str(id)]
+        ally_el = Element(element_data=ally_data,
+                          root_link=self.root_link,
+                          details_link=self.root_link.element_details
+                          )
+        self.allies_layout.add_widget(ally_el)
+		
+      # Add LinkElement button so new allies can be added:		
       ally_linker = LinkElement(linker_type='allies')
       self.allies_layout.add_widget(ally_linker)
 	  
