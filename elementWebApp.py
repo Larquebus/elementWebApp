@@ -92,15 +92,16 @@ class SearchAndSelect(FloatLayout):
   search_size = ListProperty(None)
   search_results = DictProperty(None)
   search_input = ObjectProperty(None)
+  filter = StringProperty()
   results_anchor = ObjectProperty(None)
   results_tray = ObjectProperty(None)
   num_results = NumericProperty(0)
   parent_linker_type = ObjectProperty(None)
   
-  def dynamicSearch(self, search_str):
+  def dynamicSearch(self, search_str, filter='None'):
     app = App.get_running_app()
     self.results_tray.clear_widgets()
-    search_results = app.root.web_data.search(search_str)
+    search_results = app.root.web_data.search(search_str, filter)
     self.num_results = len(search_results)
     for element in search_results:
       data = app.root.web_data.elements[search_results[element]]
@@ -356,6 +357,8 @@ class LinkElement(BoxLayout):
                                             search_pos=(self.x, self.y-150), 
                                             search_size=[250,200]
                                             )
+    if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
+      app.root.search_input.filter = 'type:char'
     app.root.search_input.parent_linker_type=self.linker_type
     self.remove_widget(self.link_button)
     app.root.add_widget(app.root.search_input)

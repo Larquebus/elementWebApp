@@ -125,13 +125,20 @@ class webData:
     self.next_id += 1
 	
   # This method searches the names of elements and returns a dictionary with matches:
-  def search(self, search_str):
+  def search(self, search_str, filter='None'):
     results = {}
     if search_str == '':
       return results
+    
     for element in self.elements:
       check = re.search(search_str.lower(), self.elements[element].name.lower())
-      if check:
+      filter_passed = False
+      if filter == 'type:char':
+        if (self.elements[element].type == 'NPC' or self.elements[element].type == 'Player'):
+          filter_passed = True
+      elif filter == 'None':
+        filter_passed = True
+      if (check and filter_passed):
         results[self.elements[element].name] = element
     return results
 	

@@ -38,7 +38,7 @@
 			id: search_input
 			multiline: False
 			size_hint_y: .2
-			on_text: root.dynamicSearch(self.text)
+			on_text: root.dynamicSearch(self.text, root.filter)
 		ScrollView:
 			do_scroll_x: False
 			pos: self.pos
