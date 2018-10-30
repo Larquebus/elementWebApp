@@ -20,16 +20,57 @@ from elementWebData import *
 class AppFrame(Widget):
   web_data = ObjectProperty(webData())
   selected_element = ObjectProperty(None)
-  focus_object = ObjectProperty(None)
+  focus_element = ObjectProperty(None)
   element_display = ObjectProperty(None)
   element_details = ObjectProperty(None)
+  search_input = ObjectProperty(None)
   
   # Updates values for whatever element is currently selected, saves the element back to the web:
-  def updateElement(self, value_to_update, new_value):
+  def updateElement(self, value_to_update, new_value, mode='selected', dims='single'):
+    element_to_update = None
+    if mode == 'selected':
+      element_to_update = self.selected_element
+    else:
+      element_to_update = self.focus_element
+
     # These lines are repetitive... clean up somehow?
-    self.selected_element.element_dict[value_to_update] = new_value
-    self.web_data.elements[self.selected_element.element_key].element_dict[value_to_update] = new_value
-    self.web_data.elements[self.selected_element.element_key].resynchronize()
+    if dims == 'single':
+      element_to_update.element_dict[value_to_update] = new_value
+      self.web_data.elements[element_to_update.element_key].element_dict[value_to_update] = new_value
+    else:
+      # Currently the only other dims option is a 'multi' dimensional update, which requires an 
+	  # update to a dictionary attribute of an Element, and which also must be reciprocated to 
+	  # the paired element.
+
+      # First update the primary element:
+      try:
+        element_to_update.element_dict[value_to_update].append(new_value)
+      except KeyError:
+        element_to_update.element_dict[value_to_update] = []
+        element_to_update.element_dict[value_to_update].append(new_value)
+
+      reciprocate_val_to_update = ''
+
+      # For parent and child links we need to update the opposite value for the reciprocate:
+      if value_to_update == 'parents':
+        reciprocate_val_to_update = 'children'
+      elif value_to_update == 'children':
+        reciprocate_val_to_update = 'parents'
+      else: 
+        reciprocate_val_to_update = value_to_update
+
+      # Next reciprocate the link between the primary and secondary element:
+      reciprocate_element = self.web_data.elements['e' + str(new_value)]
+      element_to_update_id = element_to_update.id
+      try:
+        reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
+      except KeyError:
+        reciprocate_element.element_dict[reciprocate_val_to_update] = []
+        reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
+      self.web_data.elements[reciprocate_element.element_key].resynchronize()
+
+    # Do these last steps for all modes and values:
+    self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()
 
 """
@@ -54,6 +95,7 @@ class SearchAndSelect(FloatLayout):
   results_anchor = ObjectProperty(None)
   results_tray = ObjectProperty(None)
   num_results = NumericProperty(0)
+  parent_linker_type = ObjectProperty(None)
   
   def dynamicSearch(self, search_str):
     app = App.get_running_app()
@@ -64,8 +106,9 @@ class SearchAndSelect(FloatLayout):
       data = app.root.web_data.elements[search_results[element]]
       result = SearchResultBtn(element_data=data,
                                root_link=app.root,
-                               text=element,
-                               parent_link=self)
+                               text=element
+                               )
+      result.parent_linker_type=self.parent_linker_type
       self.results_tray.add_widget(result)
 	  
   def on_num_results(self, *args):
@@ -75,14 +118,20 @@ class SearchResultBtn(Button):
   element_data = ObjectProperty(None)
   type_color = ListProperty(None)
   root_link = ObjectProperty(None)
-  parent_link = ObjectProperty(None)
+  parent_linker_type = StringProperty()
   
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
     self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
 	
   def selectSearchResult(self):
-    self.parent_link.clear_widgets()
+    self.root_link.updateElement(value_to_update=self.parent_linker_type, 
+                                 new_value=self.element_data.id, 
+                                 mode='focus', 
+                                 dims='multi'
+                                 )
+    self.root_link.remove_widget(self.root_link.search_input)
+    
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -94,7 +143,7 @@ class ElementDisplayWindow(Widget):
     self.clear_widgets()
     if display_type == 'flat':
       self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
-      flat_web = ElementFlat(root_link = app.root, 
+      flat_web = ElementFlat(root_link=app.root, 
                              size=self.flat_web_scroll.size,
                              pos=self.flat_web_scroll.pos
                              )
@@ -102,10 +151,10 @@ class ElementDisplayWindow(Widget):
       self.flat_web_scroll.add_widget(flat_web)
       self.add_widget(self.flat_web_scroll)	
     elif display_type == 'web':
-      initial_focus = app.root.web_data.elements['e' + str(app.root.web_data.meta_data["last_id"])]
+      current_focus = app.root.focus_element
       self.web_layout = ElementWeb(size=self.size, 
                                    pos=self.pos, 
-                                   focus=initial_focus,
+                                   focus=current_focus,
                                    root_link=app.root)
       self.add_widget(self.web_layout)
       self.web_layout.getElementWeb()
@@ -161,19 +210,21 @@ class ElementWeb(BoxLayout):
     self.focus_region.add_widget(focus_element)
 	
 	# Add parents to web:
-    parent_linker = LinkElement()
+    try:
+      for id in self.focus.parents:
+    parent_linker = LinkElement(linker_type='parents')
     self.parent_layout.add_widget(parent_linker)
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
-      enemy_linker = LinkElement()
+      enemy_linker = LinkElement(linker_type='enemies')
       self.enemies_layout.add_widget(enemy_linker)
 
-      ally_linker = LinkElement()
+      ally_linker = LinkElement(linker_type='allies')
       self.allies_layout.add_widget(ally_linker)
 	  
     # Add children to the web:
-    child_linker = LinkElement()
+    child_linker = LinkElement(linker_type='children')
     self.child_layout.add_widget(child_linker)
 
 # Used to block out the sub-regions of the ElementWeb window:
@@ -270,15 +321,17 @@ class NewElementInput(TextInput):
 class LinkElement(BoxLayout):
   link_button = ObjectProperty(None)
   search_input = ObjectProperty(None)
+  linker_type = StringProperty(None)
   
   def linkNewElement(self):
     app = App.get_running_app()
-    self.search_input = SearchAndSelect(size=app.root.size, 
-                                        search_pos=(self.x, self.y-150), 
-                                        search_size=[250,200]
-                                        )
+    app.root.search_input = SearchAndSelect(size=app.root.size, 
+                                            search_pos=(self.x, self.y-150), 
+                                            search_size=[250,200]
+                                            )
+    app.root.search_input.parent_linker_type=self.linker_type
     self.remove_widget(self.link_button)
-    app.root.add_widget(self.search_input)
+    app.root.add_widget(app.root.search_input)
   
 class LinkElementInput(TextInput):
   pass
@@ -451,6 +504,7 @@ Build the app:
 class elementWebApp(App):
   def build(self):
     app = AppFrame()
+    app.focus_element = app.web_data.elements["e" + str(app.web_data.meta_data["last_id"])]
     Window.maximize()
 #    app.focus_name = app_data.web_data.elements["e" + str(app_data.web_data.meta_data["last_id"])].name
     print(app.web_data.meta_data)
