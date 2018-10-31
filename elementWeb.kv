@@ -45,7 +45,7 @@
 			scroll_y: 1
 			canvas:
 				Color:
-					rgba: [0, 0, 0, .05]
+					rgba: [1, 1, 1, .1]
 				Rectangle:
 					size: self.size
 					pos: self.pos
@@ -122,6 +122,7 @@
 					LinkElement:
 						id: enemy_linker
 						linker_type: 'enemies'
+						search_orientation: 'left'
 				BoxLayout:
 					orientation: 'vertical'
 					padding: 5

@@ -357,11 +357,19 @@ class NewElementInput(TextInput):
 class LinkElement(BoxLayout):
   search_input = ObjectProperty(None)
   linker_type = StringProperty(None)
+  search_orientation = StringProperty('right')
   
   def linkNewElement(self):
     app = App.get_running_app()
+    search_x = -1
+    search_y = self.y-150
+    if self.search_orientation == 'left':
+      search_x = self.x - 250
+    else:
+      search_x = self.x + 50
+
     app.root.search_input = SearchAndSelect(size=app.root.size, 
-                                            search_pos=(self.x, self.y-150), 
+                                            search_pos=(search_x, search_y), 
                                             search_size=[250,200]
                                             )
     if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
