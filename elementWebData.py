@@ -125,7 +125,7 @@ class webData:
     self.next_id += 1
 	
   # This method searches the names of elements and returns a dictionary with matches:
-  def search(self, search_str, filter='None'):
+  def search(self, search_str, filter=None):
     results = {}
     if search_str == '':
       return results
@@ -136,7 +136,7 @@ class webData:
       if filter == 'type:char':
         if (self.elements[element].type == 'NPC' or self.elements[element].type == 'Player'):
           filter_passed = True
-      elif filter == 'None':
+      elif (filter == None or filter == ''):
         filter_passed = True
       if (check and filter_passed):
         results[self.elements[element].name] = element
