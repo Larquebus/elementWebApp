@@ -99,7 +99,7 @@ class SearchAndSelect(FloatLayout):
   num_results = NumericProperty(0)
   parent_linker_type = ObjectProperty(None)
   
-  def dynamicSearch(self, search_str, filter='None'):
+  def dynamicSearch(self, search_str, filter):
     app = App.get_running_app()
     self.results_tray.clear_widgets()
     search_results = app.root.web_data.search(search_str, filter)
@@ -205,7 +205,8 @@ class ElementWeb(BoxLayout):
   relation_layout = ObjectProperty(None)
   # Sub layouts of relation_layout:
   enemies_layout = ObjectProperty(None)
-  focus_region = ObjectProperty(None)
+  focus_layout = ObjectProperty(None)
+  focus_el_anchor = ObjectProperty(None)
   allies_layout = ObjectProperty(None)
   
   child_layout = ObjectProperty(None)
@@ -213,14 +214,15 @@ class ElementWeb(BoxLayout):
   def getElementWeb(self):
     self.parent_layout.clear_widgets()
     self.enemies_layout.clear_widgets()
-    self.focus_region.clear_widgets()
+    self.focus_el_anchor.clear_widgets()
     self.allies_layout.clear_widgets()
     self.child_layout.clear_widgets()
+
     focus_element = Element(element_data=self.focus,
                             root_link=self.root_link,
                             details_link=self.root_link.element_details
                             )
-    self.focus_region.add_widget(focus_element)
+    self.focus_el_anchor.add_widget(focus_element)
 	
 	# Add parents to web:
     for id in self.focus.parents:
@@ -230,10 +232,6 @@ class ElementWeb(BoxLayout):
                           details_link=self.root_link.element_details
                           )
       self.parent_layout.add_widget(parent_el)
-	  
-    # Add LinkElement button so new parents can be added:
-    parent_linker = LinkElement(linker_type='parents')
-    self.parent_layout.add_widget(parent_linker)
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
@@ -246,10 +244,6 @@ class ElementWeb(BoxLayout):
                             )
         self.enemies_layout.add_widget(enemy_el)	
 
-      # Add LinkElement button so new enemies can be added:
-      enemy_linker = LinkElement(linker_type='enemies')
-      self.enemies_layout.add_widget(enemy_linker)
-
       # Add allies:
       for id in self.focus.allies:
         ally_data = self.root_link.web_data.elements['e' + str(id)]
@@ -258,14 +252,8 @@ class ElementWeb(BoxLayout):
                           details_link=self.root_link.element_details
                           )
         self.allies_layout.add_widget(ally_el)
-		
-      # Add LinkElement button so new allies can be added:		
-      ally_linker = LinkElement(linker_type='allies')
-      self.allies_layout.add_widget(ally_linker)
 	  
     # Add children to the web:
-    child_linker = LinkElement(linker_type='children')
-    self.child_layout.add_widget(child_linker)
 
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(AnchorLayout):
@@ -367,7 +355,6 @@ class NewElementInput(TextInput):
   pass
   
 class LinkElement(BoxLayout):
-  link_button = ObjectProperty(None)
   search_input = ObjectProperty(None)
   linker_type = StringProperty(None)
   
@@ -380,7 +367,6 @@ class LinkElement(BoxLayout):
     if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
       app.root.search_input.filter = 'type:char'
     app.root.search_input.parent_linker_type=self.linker_type
-    self.remove_widget(self.link_button)
     app.root.add_widget(app.root.search_input)
   
 class LinkElementInput(TextInput):

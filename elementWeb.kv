@@ -93,7 +93,8 @@
 	relation_layout: relation_layout
 	# Sub layouts of relation_layout:
 	enemies_layout: enemies_layout
-	focus_region: focus_region
+	focus_layout: focus_layout
+	focus_el_anchor: focus_el_anchor
 	allies_layout: allies_layout
 	
 	child_layout: child_layout
@@ -112,8 +113,33 @@
 					id: enemies_layout
 					size_hint: None, None
 					orientation: 'vertical'	
-			WebRegion:
-				id: focus_region
+			BoxLayout:
+				id: focus_layout
+				orientation: 'horizontal'
+				padding: 5
+				WebRegion:
+					size_hint_x: .2
+					LinkElement:
+						id: enemy_linker
+						linker_type: 'enemies'
+				BoxLayout:
+					orientation: 'vertical'
+					padding: 5
+					WebRegion:
+						LinkElement:
+							id: parent_linker
+							linker_type: 'parents'
+					WebRegion:
+						id: focus_el_anchor
+					WebRegion:
+						LinkElement:
+							id: child_linker
+							linker_type: 'children'
+				WebRegion:
+					size_hint_x: .2
+					LinkElement:
+						id: ally_linker
+						linker_type: 'allies'
 			WebRegion:
 				BoxLayout:
 					id: allies_layout
@@ -155,7 +181,7 @@
 	on_text_validate: self.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
 	
 <LinkElement>:
-	size: 125, 50
+	size: 50, 50
 	pos: self.pos
 	size_hint: (None, None)
 	orientation: 'vertical'
@@ -164,7 +190,7 @@
 		id: link_button
 		font_name: 'Arial'
 		font_size: 14
-		text: "Link Element..."
+		text: "+"
 		on_press: self.parent.linkNewElement()
 		
 <LinkElementInput>:
