@@ -13,6 +13,7 @@ from kivy.uix.dropdown import DropDown
 from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty, DictProperty
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
+from kivy.clock import Clock
 
 from elementWebData import *
 
@@ -114,7 +115,18 @@ class SearchAndSelect(FloatLayout):
 	  
   def on_num_results(self, *args):
     self.results_anchor.size = self.x, self.num_results * 25
-
+"""	
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (touch.pos[0] >= self.search_pos[0] 
+        and touch.pos[0] <= self.search_pos[0] + self.search_size[0]
+	    and touch.pos[1] >= self.search_pos[1] 
+        and touch.pos[1] <= self.search_pos[0] + self.search_size[1]):
+      return False
+    else:
+      app.root.remove_widget(self)
+      return True
+"""
 class SearchResultBtn(Button):
   element_data = ObjectProperty(None)
   type_color = ListProperty(None)
@@ -291,6 +303,14 @@ class Element(Button):
     self.display_label_link.text = 'Currently selected: ' + self.element_name
     self.type_content_link.addTypeContent(self.element_data.type)
 	
+  def on_touch_down(self, touch):
+    if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
+      self.root_link.focus_element = self.element_data
+      self.root_link.element_display.display_window.activateDisplay('web')
+    elif self.collide_point(touch.pos[0], touch.pos[1]):
+      self.root_link.selected_element = self.element_data
+      self.selectElement()
+	  
 class NewElement(BoxLayout):
   name_request = ObjectProperty(None)
   type_request = ObjectProperty(None)
@@ -381,8 +401,10 @@ class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
   
   def activateElementNotes(self):
+    app = App.get_running_app()
     self.clear_widgets()
     self.element_notes = ElementNotes(size=self.size, pos=self.pos)
+    self.element_notes.root_link = app.root
     self.add_widget(self.element_notes)
     self.setNotesText()
 	
@@ -390,7 +412,7 @@ class ElementNotesFrame(Widget):
     self.element_notes.text = self.parent.root_link.selected_element.notes
 	
 class ElementNotes(TextInput):
-  pass
+  root_link = ObjectProperty(None)
   
 class StatBubble(Widget):
   stat = StringProperty()
@@ -402,7 +424,7 @@ class RankDropdown(DropDown):
     app.root.updateElement('rank', selected_rank)
 	
 class CauseInput(TextInput):
-  pass
+  root_link = ObjectProperty(None)
   
 class TypeSpecificContent(BoxLayout):
   
@@ -489,6 +511,7 @@ class TypeSpecificContent(BoxLayout):
 	  
       # Add a CauseInput to store the Faction/Party's Cause:
       cause_input = CauseInput(text=app.root.selected_element.cause, size=self.size, pos=self.pos)
+      cause_input.root_link = app.root
       self.add_widget(cause_input)
 	  
     elif type == 'NPC':

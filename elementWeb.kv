@@ -134,7 +134,6 @@
 	size_hint: (None, None)
 	text: self.element_name
 	font_name: 'Arial'
-	on_press: self.selectElement()
 	background_normal: ''
 	background_color: self.type_color
 	color: [0, 0, 0, 1]
@@ -187,10 +186,10 @@
 	pos: self.pos
 			
 <ElementNotes>:
-	on_text: self.parent.parent.root_link.updateElement('notes', self.text)
+	on_text: self.root_link.updateElement('notes', self.text)
 	
 <CauseInput>:
-	on_text: self.parent.parent.root_link.updateElement('cause', self.text)
+	on_text: self.root_link.updateElement('cause', self.text)
 	
 <TypeSpecificContent>:
 	size: self.size
