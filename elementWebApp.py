@@ -209,6 +209,7 @@ class ElementWeb(BoxLayout):
   focus_el_anchor = ObjectProperty(None)
   allies_layout = ObjectProperty(None)
   
+  child_layout_size = NumericProperty(0)
   child_layout = ObjectProperty(None)
   
   def getElementWeb(self):
@@ -216,6 +217,7 @@ class ElementWeb(BoxLayout):
     self.enemies_layout.clear_widgets()
     self.focus_el_anchor.clear_widgets()
     self.allies_layout.clear_widgets()
+
     self.child_layout.clear_widgets()
 
     focus_element = Element(element_data=self.focus,
@@ -254,9 +256,95 @@ class ElementWeb(BoxLayout):
         self.allies_layout.add_widget(ally_el)
 	  
     # Add children to the web:
+    # First set up some boolean toggles, which will be altered as needed depending on
+	# what types of children the focus element has:
+    need_agent = False
+    need_asset = False
+    need_blackmail = False
+    need_title = False
+    need_agnostic = False
+	
+    # Check each child's type and toggle booleans:
+    for id in self.focus.children:
+      child_el = self.root_link.web_data.elements['e' + str(id)]
+      if child_el.type == 'Agent':
+        need_agent = True
+      elif child_el.type == 'Asset':
+        need_asset = True
+      elif child_el.type == 'Blackmail':
+        need_blackmail = True
+      elif child_el.type == 'Title':
+        need_title = True
+      else:
+        need_agnostic = True
+    
+    # Add different layouts depending on the boolean toggles:
+    if need_agnostic:
+      agnostic_layout = LinkedElTray()
+      self.child_layout_size += .2	  
+      self.child_layout.add_widget(agnostic_layout)
+	  
+    if need_agent:
+      agent_layout = LinkedElTray()
+      self.child_layout_size += .2	  
+      self.child_layout.add_widget(agent_layout)
 
+    if need_asset:
+      asset_layout = LinkedElTray()
+      self.child_layout_size += .2	  	  
+      self.child_layout.add_widget(asset_layout)
+
+    if need_blackmail:
+      blackmail_layout = LinkedElTray()
+      self.child_layout_size += .2	  	  
+      self.child_layout.add_widget(blackmail_layout)
+
+    if need_title:
+      title_layout = LinkedElTray()
+      self.child_layout_size += .2	  	  
+      self.child_layout.add_widget(title_layout)	  
+
+    # Finally, add child elements to the created layouts, matching the appropriate type
+    # to the appropriate layout:
+    for id in self.focus.children:
+      child_data = self.root_link.web_data.elements['e' + str(id)]
+      if child_data.type == 'Agent':
+        child_element = Element(element_data=child_data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+        agent_layout.add_widget(child_element)								
+      elif child_data.type == 'Asset':
+        child_element = Element(element_data=child_data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+        asset_layout.add_widget(child_element)
+      elif child_data.type == 'Blackmail':
+        child_element = Element(element_data=child_data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+        asset_layout.add_widget(child_element)
+      elif child_data.type == 'Title':
+        child_element = Element(element_data=child_data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+        title_layout.add_widget(child_element)
+      else:
+        child_element = Element(element_data=child_data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+        agnostic_layout.add_widget(child_element)
+		
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(AnchorLayout):
+  pass
+  
+# Used to store linked elements in a neat stack:
+class LinkedElTray(BoxLayout):
   pass
   
 # All visible widgets in the ElementWeb and ElementFlat are Elements of various types.

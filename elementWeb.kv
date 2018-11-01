@@ -100,19 +100,17 @@
 	child_layout: child_layout
 	
 	WebRegion:
-		BoxLayout:
+		LinkedElTray:
 			id: parent_layout
-			size_hint: None, None
-			orientation: 'vertical'	
+			size_hint: None, None	
 	WebRegion:
 		BoxLayout:
 			id: relation_layout
 			orientation: 'horizontal'
 			WebRegion:
-				BoxLayout:
+				LinkedElTray:
 					id: enemies_layout
 					size_hint: None, None
-					orientation: 'vertical'	
 			BoxLayout:
 				id: focus_layout
 				orientation: 'horizontal'
@@ -142,19 +140,23 @@
 						id: ally_linker
 						linker_type: 'allies'
 			WebRegion:
-				BoxLayout:
+				LinkedElTray:
 					id: allies_layout
-					size_hint: None, None
-					orientation: 'vertical'
+					size_hint: None, None				
 	WebRegion:
 		BoxLayout:
 			id: child_layout
-			size_hint: None, None
+			size_hint: root.child_layout_size, None
 			orientation: 'horizontal'
+
 		
 <WebRegion>:
 	anchor_x: 'center'
 	anchor_y: 'center'
+	
+<LinkedElTray>:
+	orientation: 'vertical'
+	spacing: 2
 	
 <Element>:
 	size: len(self.element_name) * 10, 50
