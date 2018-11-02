@@ -407,6 +407,7 @@ class NewElement(BoxLayout):
         new_element_dict["clout"] = ""
     app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
+    app.root.element_display.display_window.activateDisplay(self.parent_display_type)
     if self.parent_display_type =='flat':
       self.clear_widgets()
 	

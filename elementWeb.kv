@@ -43,12 +43,6 @@
 			do_scroll_x: False
 			pos: self.pos
 			scroll_y: 1
-			canvas:
-				Color:
-					rgba: [1, 1, 1, .1]
-				Rectangle:
-					size: self.size
-					pos: self.pos
 			AnchorLayout:
 				id: results_anchor
 				anchor_x: 'left'
@@ -159,8 +153,9 @@
 	spacing: 2
 	
 <Element>:
-	size: len(self.element_name) * 10, 50
+	size: self.texture_size
 	size_hint: (None, None)
+	padding: 10, 10
 	text: self.element_name
 	font_name: 'Arial'
 	background_normal: ''
