@@ -24,36 +24,29 @@
 			size: self.size
 			pos: self.pos
 			
-<SearchAndSelect>:
-	search_input: search_input
-	results_tray: results_tray
-	results_anchor: results_anchor
+<SearchBar>:
+	multiline: False
+	on_text: self.dynamicSearch(self.text, self.filter)
 	
-	BoxLayout:
-		orientation: 'vertical'	
-		pos: root.search_pos
-		size: root.search_size
-		size_hint: None, None
-		TextInput:
-			id: search_input
-			multiline: False
-			size_hint_y: .2
-			on_text: root.dynamicSearch(self.text, root.filter)
-		ScrollView:
-			do_scroll_x: False
-			pos: self.pos
-			scroll_y: 1
-			AnchorLayout:
-				id: results_anchor
-				anchor_x: 'left'
-				anchor_y: 'top'
-				size_hint_y: None
-				size: root.x, root.num_results * 25
-				BoxLayout:
-					id: results_tray
-					orientation: 'vertical'
-					size_hint: 1, None
-					size: self.parent.size
+<SearchResults>:
+	results_tray: results_layout
+	results_anchor: results_anchor
+	pos: self.search_bar_pos[0], self.search_bar_pos[1] - 125
+	size: self.search_bar_width, 125
+	do_scroll_x: False
+	scroll_y: 1
+	size_hint: None, None
+	AnchorLayout:
+		id: results_anchor
+		anchor_x: 'left'
+		anchor_y: 'top'
+		size_hint_y: None
+		size: root.width, root.num_results * 25
+		BoxLayout:
+			id: results_layout
+			orientation: 'vertical'
+			size_hint: 1, None
+			size: self.parent.size
 					
 <SearchResultBtn>:
 	size_hint_y: None

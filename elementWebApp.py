@@ -24,7 +24,8 @@ class AppFrame(Widget):
   focus_element = ObjectProperty(None)
   element_display = ObjectProperty(None)
   element_details = ObjectProperty(None)
-  search_input = ObjectProperty(None)
+  app_float = ObjectProperty(None)
+  search_res_display = ObjectProperty(None)
   
   # Updates values for whatever element is currently selected, saves the element back to the web:
   def updateElement(self, value_to_update, new_value, mode='selected', dims='single'):
@@ -74,36 +75,20 @@ class AppFrame(Widget):
     self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()
 
-"""
-These widgets make up the left hand window of the application, which contains all widgets for the 
-Element Web itself.
-"""
-# Holds the various ways of displaying Elements and the ElementDisplayBar:
-class ElementDisplay(BoxLayout):
-  display_window = ObjectProperty(None)
-  
-# A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
-class ElementDisplayBar(BoxLayout):
-  detail_display_label = ObjectProperty(None)
-  
-# A search input and select widget, searches the entire web and when an Element is clicked, 
-# makes it the selected_element:
-class SearchAndSelect(FloatLayout):
-  search_pos = ListProperty(None)
-  search_size = ListProperty(None)
-  search_results = DictProperty(None)
-  search_input = ObjectProperty(None)
-  filter = StringProperty()
-  results_anchor = ObjectProperty(None)
-  results_tray = ObjectProperty(None)
-  num_results = NumericProperty(0)
+class SearchBar(TextInput):
+  filter = StringProperty(None)
+  selected_result = NumericProperty(None)
+  results_orientation = StringProperty(None)
+  results_view_link = ObjectProperty(None)
+  results_tray_link = ObjectProperty(None)
   parent_linker_type = ObjectProperty(None)
   
   def dynamicSearch(self, search_str, filter):
     app = App.get_running_app()
-    self.results_tray.clear_widgets()
     search_results = app.root.web_data.search(search_str, filter)
-    self.num_results = len(search_results)
+    if len(search_results) > 0:
+      self.results_tray_link.clear_widgets()
+      self.results_view_link.num_results = len(search_results)
     for element in search_results:
       data = app.root.web_data.elements[search_results[element]]
       result = SearchResultBtn(element_data=data,
@@ -111,10 +96,27 @@ class SearchAndSelect(FloatLayout):
                                text=element
                                )
       result.parent_linker_type=self.parent_linker_type
-      self.results_tray.add_widget(result)
+      self.results_tray_link.add_widget(result)
+  
+  def on_focus(self, *args):
+    app = App.get_running_app()
+    if self.focus == True:
+      search_res_display = SearchResults(search_bar_width=self.width, search_bar_pos=self.pos)
+      
+      app.root.app_float.add_widget(search_res_display)	 
+      self.results_view_link = search_res_display	  
+      self.results_tray_link = search_res_display.results_tray
 	  
+class SearchResults(ScrollView):
+  num_results = NumericProperty(0)
+  results_anchor = ObjectProperty(None)
+  results_tray = ObjectProperty(None)
+  search_bar_pos = ListProperty(None)
+  search_bar_width = NumericProperty(None)
+  
   def on_num_results(self, *args):
-    self.results_anchor.size = self.x, self.num_results * 25
+    self.results_anchor.size = self.width, self.num_results * 25	  
+
 """	
   def on_touch_down(self, touch):
     app = App.get_running_app()
@@ -143,8 +145,20 @@ class SearchResultBtn(Button):
                                  mode='focus', 
                                  dims='multi'
                                  )
-    self.root_link.remove_widget(self.root_link.search_input)
-    
+    self.root_link.remove_widget(self.root_link.app_float)	
+    self.root_link.element_display.display_window.activateDisplay('web')
+	
+"""
+These widgets make up the left hand window of the application, which contains all widgets for the 
+Element Web itself.
+"""
+# Holds the various ways of displaying Elements and the ElementDisplayBar:
+class ElementDisplay(BoxLayout):
+  display_window = ObjectProperty(None)
+  
+# A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
+class ElementDisplayBar(BoxLayout):
+  detail_display_label = ObjectProperty(None)    
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
@@ -325,7 +339,7 @@ class ElementWeb(BoxLayout):
                                 root_link=self.root_link,
                                 details_link=self.root_link.element_details
                                 )
-        asset_layout.add_widget(child_element)
+        blackmail_layout.add_widget(child_element)
       elif child_data.type == 'Title':
         child_element = Element(element_data=child_data,
                                 root_link=self.root_link,
@@ -451,20 +465,22 @@ class LinkElement(BoxLayout):
   def linkNewElement(self):
     app = App.get_running_app()
     search_x = -1
-    search_y = self.y-150
+    search_y = self.y + 1
     if self.search_orientation == 'left':
       search_x = self.x - 250
     else:
       search_x = self.x + 50
 
-    app.root.search_input = SearchAndSelect(size=app.root.size, 
-                                            search_pos=(search_x, search_y), 
-                                            search_size=[250,200]
-                                            )
+    app.root.app_float = FloatLayout(size=app.root.size)
+    app.root.add_widget(app.root.app_float)
+    link_search_bar = SearchBar(pos=(search_x, search_y), size=[250, 30], size_hint=(None,None))
+    
     if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
-      app.root.search_input.filter = 'type:char'
-    app.root.search_input.parent_linker_type=self.linker_type
-    app.root.add_widget(app.root.search_input)
+      link_search_bar.filter = 'type:char'
+
+    link_search_bar.parent_linker_type=self.linker_type
+	
+    app.root.app_float.add_widget(link_search_bar)
   
 class LinkElementInput(TextInput):
   pass
