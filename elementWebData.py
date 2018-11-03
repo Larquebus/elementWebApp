@@ -123,6 +123,7 @@ class webData:
     self.elements["e" + str(data_dict["id"])] = new_element
     self.web_data_list.append(data_dict)
     self.next_id += 1
+    return data_dict["id"]
 	
   # This method searches the names of elements and returns a dictionary with matches:
   def search(self, search_str, filter=None):

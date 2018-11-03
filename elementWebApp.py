@@ -10,7 +10,8 @@ from kivy.uix.anchorlayout import AnchorLayout
 from kivy.uix.floatlayout import FloatLayout
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.dropdown import DropDown
-from kivy.properties import ObjectProperty, StringProperty, NumericProperty, ListProperty, DictProperty
+from kivy.properties import (ObjectProperty, StringProperty, NumericProperty, 
+                            ListProperty, DictProperty, BooleanProperty)
 from kivy.core.window import Window
 from kivy.graphics import BorderImage
 from kivy.clock import Clock
@@ -78,6 +79,7 @@ class AppFrame(Widget):
 class SearchBar(TextInput):
   filter = StringProperty(None)
   selected_result = NumericProperty(None)
+  parent_display_type = StringProperty()
   results_orientation = StringProperty(None)
   results_view_link = ObjectProperty(None)
   results_tray_link = ObjectProperty(None)
@@ -88,7 +90,15 @@ class SearchBar(TextInput):
     search_results = app.root.web_data.search(search_str, filter)
     if len(search_results) > 0:
       self.results_tray_link.clear_widgets()
-      self.results_view_link.num_results = len(search_results)
+      if self.parent_display_type == 'web':
+        self.results_view_link.num_results = len(search_results) + 1
+        add_new_element_btn = SearchResultBtn(root_link=app.root, 
+                                              text='Add new element...', 
+                                              mode='new',
+                                              parent_linker_type = self.parent_linker_type,
+                                              parent_display_type = self.parent_display_type
+                                              )
+        self.results_tray_link.add_widget(add_new_element_btn)
     for element in search_results:
       data = app.root.web_data.elements[search_results[element]]
       result = SearchResultBtn(element_data=data,
@@ -101,11 +111,11 @@ class SearchBar(TextInput):
   def on_focus(self, *args):
     app = App.get_running_app()
     if self.focus == True:
-      search_res_display = SearchResults(search_bar_width=self.width, search_bar_pos=self.pos)
+      app.root.search_res_display = SearchResults(search_bar_width=self.width, search_bar_pos=self.pos)
       
-      app.root.app_float.add_widget(search_res_display)	 
-      self.results_view_link = search_res_display	  
-      self.results_tray_link = search_res_display.results_tray
+      app.root.app_float.add_widget(app.root.search_res_display)	 
+      self.results_view_link = app.root.search_res_display	  
+      self.results_tray_link = app.root.search_res_display.results_tray
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
@@ -130,23 +140,39 @@ class SearchResults(ScrollView):
       return True
 """
 class SearchResultBtn(Button):
+  mode = StringProperty()
   element_data = ObjectProperty(None)
   type_color = ListProperty(None)
   root_link = ObjectProperty(None)
-  parent_linker_type = StringProperty()
+  parent_display_type = StringProperty()
+  parent_linker_type = StringProperty(None)
   
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
-    self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+    if self.mode == 'new':
+      self.type_color = [1, 1, 1, 1]
+    else:
+      self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
 	
   def selectSearchResult(self):
-    self.root_link.updateElement(value_to_update=self.parent_linker_type, 
-                                 new_value=self.element_data.id, 
-                                 mode='focus', 
-                                 dims='multi'
-                                 )
-    self.root_link.remove_widget(self.root_link.app_float)	
-    self.root_link.element_display.display_window.activateDisplay('web')
+    if self.mode == 'new':
+      if self.parent_linker_type != None:
+        new_element = NewElement(pos=self.root_link.search_res_display.pos)
+        new_element.parent_display_type = self.parent_display_type
+        new_element.link_to_focus = True
+        new_element.parent_linker_type = self.parent_linker_type
+        new_element.nameNewElement()
+      self.root_link.app_float.clear_widgets()
+      self.root_link.app_float.add_widget(new_element)
+      
+    else:
+      self.root_link.updateElement(value_to_update=self.parent_linker_type, 
+                                   new_value=self.element_data.id, 
+                                   mode='focus', 
+                                   dims='multi'
+                                   )
+      self.root_link.remove_widget(self.root_link.app_float)	
+      self.root_link.element_display.display_window.activateDisplay('web')
 	
 """
 These widgets make up the left hand window of the application, which contains all widgets for the 
@@ -406,21 +432,30 @@ class NewElement(BoxLayout):
   type_request = ObjectProperty(None)
   new_element_obj = ObjectProperty(None)
   parent_display_type = StringProperty()
+  link_to_focus = BooleanProperty(False)
+  parent_linker_type = StringProperty(None)
   
   def addNewElementToWeb(self, text, type):
     app = App.get_running_app()
 	
     # Assemble new element data based on where the NewElement button sits in the tree:
-    if self.parent_display_type == 'flat':
-      new_element_dict = {"name": text, "notes": "", "type": type}
-      if new_element_dict["type"] == 'NPC':
-        new_element_dict["rank"] = 'None'
-        new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
-      elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
-        new_element_dict["stats"] = {"Clout": 0}
-        new_element_dict["clout"] = ""
-    app.root.web_data.addElement(new_element_dict)
+    new_element_dict = {"name": text, "notes": "", "type": type}
+    if new_element_dict["type"] == 'NPC':
+      new_element_dict["rank"] = 'None'
+      new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
+    elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
+      new_element_dict["stats"] = {"Clout": 0}
+      new_element_dict["cause"] = ""
+    new_element_id = app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
+    # If the NewElement object was created from a linker's search, we need to link it to the focus:
+    if self.link_to_focus:
+      app.root.updateElement(value_to_update=self.parent_linker_type, 
+                             new_value=new_element_id, 
+                             mode='focus', 
+                             dims='multi'
+                             )
+      app.root.remove_widget(app.root.app_float)	
     app.root.element_display.display_window.activateDisplay(self.parent_display_type)
     if self.parent_display_type =='flat':
       self.clear_widgets()
@@ -430,29 +465,28 @@ class NewElement(BoxLayout):
   def nameNewElement(self):
     app = App.get_running_app()
     self.clear_widgets()
-    if self.parent_display_type == 'flat':
-      # For new elements in the flat element display, add a text input and type select dropdown:
-      # Add the text input:
-      self.name_request = NewElementInput(size_hint_y=1.1)
-      self.add_widget(self.name_request)
+    # For new elements in the flat element display, add a text input and type select dropdown:
+    # Add the text input:
+    self.name_request = NewElementInput(size_hint_y=1.1)
+    self.add_widget(self.name_request)
+    
+	# Add the dropdown:
+    dropdown = DropDown()
       
-	  # Add the dropdown:
-      dropdown = DropDown()
-      
-      # Populate dropdown with types from the web's meta_data:
-      for type in app.root.web_data.meta_data["available_types"]:
-        btn = Button(text=type, size_hint_y=None, height=25, background_normal='')
-        color_array = app.root.web_data.type_colors_kivy[type] 
-        btn.background_color=color_array		
-        btn.bind(on_release=lambda btn: dropdown.select(btn.text))
-        dropdown.add_widget(btn)
+    # Populate dropdown with types from the web's meta_data:
+    for type in app.root.web_data.meta_data["available_types"]:
+      btn = Button(text=type, size_hint_y=None, height=25, background_normal='')
+      color_array = app.root.web_data.type_colors_kivy[type] 
+      btn.background_color=color_array		
+      btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+      dropdown.add_widget(btn)
 		
-      # Add the button that triggers the dropdown:
-      self.dropdown_btn = Button(text='select type', height=25)
-      self.dropdown_btn.bind(on_release=dropdown.open)
-      dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
+    # Add the button that triggers the dropdown:
+    self.dropdown_btn = Button(text='select type', height=25)
+    self.dropdown_btn.bind(on_release=dropdown.open)
+    dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
 	  
-      self.add_widget(self.dropdown_btn)
+    self.add_widget(self.dropdown_btn)
 	  
 class NewElementInput(TextInput):
   pass
@@ -478,6 +512,7 @@ class LinkElement(BoxLayout):
     if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
       link_search_bar.filter = 'type:char'
 
+    link_search_bar.parent_display_type='web'
     link_search_bar.parent_linker_type=self.linker_type
 	
     app.root.app_float.add_widget(link_search_bar)
