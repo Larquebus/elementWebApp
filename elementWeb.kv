@@ -31,7 +31,7 @@
 <SearchResults>:
 	results_tray: results_layout
 	results_anchor: results_anchor
-	pos: self.search_bar_pos[0], self.search_bar_pos[1] - 125
+	pos: self.search_bar_pos
 	size: self.search_bar_width, 125
 	do_scroll_x: False
 	scroll_y: 1
@@ -241,6 +241,7 @@
 	web: self.web_data
 	element_details: element_details
 	element_display: display
+	static_search_bar: static_search_bar
 	
 	BoxLayout:
 		orientation: 'horizontal'
@@ -267,6 +268,11 @@
 					on_press: self.parent.parent.display_window.activateDisplay('flat')
 			ElementDisplayWindow:
 				id: display_window
+			SearchBar:
+				id: static_search_bar
+				size_hint_y: .03
+				results_orientation: 'above'
+				parent_linker_type: None
 		ElementDetails:
 			id: element_details
 			pos: self.pos

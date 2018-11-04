@@ -24,6 +24,7 @@ class AppFrame(Widget):
   selected_element = ObjectProperty(None)
   focus_element = ObjectProperty(None)
   element_display = ObjectProperty(None)
+  static_search_bar = ObjectProperty(None)
   element_details = ObjectProperty(None)
   app_float = ObjectProperty(None)
   search_res_display = ObjectProperty(None)
@@ -103,7 +104,9 @@ class SearchBar(TextInput):
       data = app.root.web_data.elements[search_results[element]]
       result = SearchResultBtn(element_data=data,
                                root_link=app.root,
-                               text=element
+                               text=element,
+                               parent_linker_type=self.parent_linker_type,
+                               parent_display_type=self.parent_display_type							   
                                )
       result.parent_linker_type=self.parent_linker_type
       self.results_tray_link.add_widget(result)
@@ -111,7 +114,15 @@ class SearchBar(TextInput):
   def on_focus(self, *args):
     app = App.get_running_app()
     if self.focus == True:
-      app.root.search_res_display = SearchResults(search_bar_width=self.width, search_bar_pos=self.pos)
+      if self.results_orientation == 'above':
+        pos_for_results = [self.pos[0], self.pos[1] + self.height]
+      else:
+        pos_for_results = self.pos[0], self.pos[1] - 125
+      if self.parent_linker_type == None:
+        app.root.app_float = FloatLayout(size=app.root.size)
+        app.root.add_widget(app.root.app_float)
+      app.root.search_res_display = SearchResults(search_bar_width=self.width, 
+                                                  search_bar_pos=pos_for_results)
       
       app.root.app_float.add_widget(app.root.search_res_display)	 
       self.results_view_link = app.root.search_res_display	  
@@ -166,11 +177,17 @@ class SearchResultBtn(Button):
       self.root_link.app_float.add_widget(new_element)
       
     else:
-      self.root_link.updateElement(value_to_update=self.parent_linker_type, 
-                                   new_value=self.element_data.id, 
-                                   mode='focus', 
-                                   dims='multi'
-                                   )
+      if (self.parent_linker_type == None and self.parent_display_type == 'web'):
+        self.root_link.focus_element = self.element_data
+        print(self.root_link.focus_element.name)
+        self.root_link.element_display.display_window.activateDisplay('web')
+        self.root_link.static_search_bar.text = ''
+      else:
+        self.root_link.updateElement(value_to_update=self.parent_linker_type, 
+                                     new_value=self.element_data.id, 
+                                     mode='focus', 
+                                     dims='multi'
+                                     )
       self.root_link.remove_widget(self.root_link.app_float)	
       self.root_link.element_display.display_window.activateDisplay('web')
 	
@@ -195,6 +212,7 @@ class ElementDisplayWindow(Widget):
     app = App.get_running_app()
     self.clear_widgets()
     if display_type == 'flat':
+      app.root.static_search_bar.parent_display_type = 'flat'
       self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
       flat_web = ElementFlat(root_link=app.root, 
                              size=self.flat_web_scroll.size,
@@ -204,6 +222,7 @@ class ElementDisplayWindow(Widget):
       self.flat_web_scroll.add_widget(flat_web)
       self.add_widget(self.flat_web_scroll)	
     elif display_type == 'web':
+      app.root.static_search_bar.parent_display_type = 'web'	  
       current_focus = app.root.focus_element
       self.web_layout = ElementWeb(size=self.size, 
                                    pos=self.pos, 
@@ -505,8 +524,6 @@ class LinkElement(BoxLayout):
     else:
       search_x = self.x + 50
 
-    app.root.app_float = FloatLayout(size=app.root.size)
-    app.root.add_widget(app.root.app_float)
     link_search_bar = SearchBar(pos=(search_x, search_y), size=[250, 30], size_hint=(None,None))
     
     if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
@@ -515,6 +532,8 @@ class LinkElement(BoxLayout):
     link_search_bar.parent_display_type='web'
     link_search_bar.parent_linker_type=self.linker_type
 	
+    app.root.app_float = FloatLayout(size=app.root.size)
+    app.root.add_widget(app.root.app_float)	
     app.root.app_float.add_widget(link_search_bar)
   
 class LinkElementInput(TextInput):
@@ -692,6 +711,7 @@ class elementWebApp(App):
   def build(self):
     app = AppFrame()
     app.focus_element = app.web_data.elements["e" + str(app.web_data.meta_data["last_id"])]
+    #app.element_display.display_window.activateDisplay('web')
     Window.maximize()
 #    app.focus_name = app_data.web_data.elements["e" + str(app_data.web_data.meta_data["last_id"])].name
     print(app.web_data.meta_data)
