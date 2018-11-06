@@ -43,7 +43,7 @@ class AppFrame(Widget):
       self.web_data.elements[element_to_update.element_key].element_dict[value_to_update] = new_value
     else:
       # Currently the only other dims option is a 'multi' dimensional update, which requires an 
-	  # update to a dictionary attribute of an Element, and which also must be reciprocated to 
+	  # update to a list attribute of an Element, and which also must be reciprocated to 
 	  # the paired element.
 
       # First update the primary element:
@@ -76,7 +76,38 @@ class AppFrame(Widget):
     # Do these last steps for all modes and values:
     self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()
+	
+  # Removes a specified link type to a specified element from the focus element:
+  def unLink(self, link_type_to_remove, id_to_remove):
+    try:
+      self.focus_element.element_dict[link_type_to_remove].remove(id_to_remove)
+    except ValueError:
+      print('Value is not linked to focus element.')
+    else:
+      self.focus_element.resynchronize()
+	  
+    reciprocate_type_to_remove = ''
 
+    # For parent and child links we need to remove the id from the opposite value 
+	# for the reciprocate:
+    if link_type_to_remove == 'parents':
+      reciprocate_val_to_remove = 'children'
+    elif link_type_to_remove == 'children':
+      reciprocate_val_to_remove = 'parents'
+    else: 
+      reciprocate_val_to_remove = link_type_to_remove
+	  
+	# Next remove the link  between the focus and the reciprocate:
+    reciprocate_element = self.web_data.elements['e' + str(id_to_remove)]
+    try:
+      reciprocate_element.element_dict[reciprocate_val_to_remove].remove(self.focus_element.id)
+    except ValueError:
+      print('Value is not linked to focus element.')
+    else:
+      reciprocate_element.resynchronize()
+    
+    self.element_display.display_window.activateDisplay('web')
+	
 class SearchBar(TextInput):
   filter = StringProperty(None)
   selected_result = NumericProperty(None)
@@ -100,6 +131,7 @@ class SearchBar(TextInput):
                                               parent_display_type = self.parent_display_type
                                               )
         self.results_tray_link.add_widget(add_new_element_btn)
+		
     for element in search_results:
       data = app.root.web_data.elements[search_results[element]]
       result = SearchResultBtn(element_data=data,
@@ -166,22 +198,34 @@ class SearchResultBtn(Button):
       self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
 	
   def selectSearchResult(self):
+    # If the selected search result is a "Add new element..." search "result":
     if self.mode == 'new':
+      # For searches called by linker buttons in the element web, create a NewElement
+	  # prompt to replace the search bar: 
       if self.parent_linker_type != None:
-        new_element = NewElement(pos=self.root_link.search_res_display.pos)
+        new_element = NewElement(pos=(self.root_link.search_res_display.pos[0],
+                                      self.root_link.search_res_display.pos[1] + 124
+                                      )
+                                 )
         new_element.parent_display_type = self.parent_display_type
-        new_element.link_to_focus = True
+		# Tells the NewElement object to link the resulting new element to the focus:
+        new_element.link_to_focus = True 
         new_element.parent_linker_type = self.parent_linker_type
         new_element.nameNewElement()
+      # For searches called by the static search bar, 
       self.root_link.app_float.clear_widgets()
       self.root_link.app_float.add_widget(new_element)
       
     else:
+      # If the selected search result was an element, behavior depends on what called the 
+	  #search:
+	  # For searches called by the static search bar, simply make the selected element 
+	  # the focus and reset the static search bar's text:
       if (self.parent_linker_type == None and self.parent_display_type == 'web'):
         self.root_link.focus_element = self.element_data
-        print(self.root_link.focus_element.name)
         self.root_link.element_display.display_window.activateDisplay('web')
         self.root_link.static_search_bar.text = ''
+      # For searches called by a linker button, link the selected element to the focus:
       else:
         self.root_link.updateElement(value_to_update=self.parent_linker_type, 
                                      new_value=self.element_data.id, 
@@ -268,9 +312,88 @@ class ElementWeb(BoxLayout):
   focus_el_anchor = ObjectProperty(None)
   allies_layout = ObjectProperty(None)
   
-  child_layout_size = NumericProperty(0)
+  child_layout_width_hint = NumericProperty(0)
+  child_layout_height = NumericProperty(0)
   child_layout = ObjectProperty(None)
+  # Sub layouts of the child_layout:
+  agnostic_layout = ObjectProperty(None)
+  agent_layout = ObjectProperty(None)
+  asset_layout = ObjectProperty(None)
+  blackmail_layout = ObjectProperty(None)
+  title_layout = ObjectProperty(None)
   
+  
+  def createLinkLayout(self, layout_type):
+    links_to_loop = []
+    check_link_el_type = False
+    if layout_type == 'parents':
+      links_to_loop = self.focus.parents
+      target_layout = self.parent_layout
+    elif layout_type == 'enemies':
+      links_to_loop = self.focus.enemies
+      target_layout = self.enemies_layout
+    elif layout_type == 'allies':
+      links_to_loop = self.focus.allies
+      target_layout = self.allies_layout
+    else:
+      links_to_loop = self.focus.children
+      check_link_el_type = True
+      if layout_type == 'Agent':
+        target_layout = self.agent_layout	
+      elif layout_type == 'Asset':
+        target_layout = self.asset_layout
+      elif layout_type == 'Blackmail':
+        target_layout = self.blackmail_layout
+      elif layout_type == 'Title':
+        target_layout = self.title_layout
+      else:
+        target_layout = self.agnostic_layout	  
+
+    layout_height = 0
+    layout_width = 0
+		
+    for id in links_to_loop:
+      data = self.root_link.web_data.elements['e' + str(id)]
+      # For child layout building, each child in links_to_loop must have its type
+      # verified to make sure it matches type_layout and can thus be safely added to
+	  # the appropriate layout:
+      if check_link_el_type and layout_type == 'Agnostic':
+        if (data.type == 'Agent'
+            or data.type == 'Asset'
+            or data.type == 'Blackmail'
+            or data.type == 'Title'):		
+          continue
+        else:
+          pass
+      elif check_link_el_type:
+        if data.type == layout_type:
+          pass
+        else:
+          continue	  
+        
+      element_to_hold = Element(element_data=data,
+                                root_link=self.root_link,
+                                details_link=self.root_link.element_details
+                                )
+      element_to_hold.texture_update() # Forces kivy to generate the texture sizes so we can use 
+                                       # it to set sizes for layouts and such.
+      holder = LinkHolder(root_link=self.root_link,
+                          element_id = data.id,
+                          unlinker_type=layout_type,
+                          holder_height=element_to_hold.texture_size[1]
+                          )						  
+      holder.link_anchor.add_widget(element_to_hold)
+      
+      target_layout.add_widget(holder)
+	  
+      layout_height += element_to_hold.texture_size[1]
+      if layout_width < element_to_hold.texture_size[0]:
+        layout_width = element_to_hold.texture_size[0]
+    target_layout.height = layout_height
+    layout_width = (layout_width + 20) * 1.1
+    target_layout.width = layout_width
+    return layout_width, layout_height
+	  
   def getElementWeb(self):
     self.parent_layout.clear_widgets()
     self.enemies_layout.clear_widgets()
@@ -286,33 +409,15 @@ class ElementWeb(BoxLayout):
     self.focus_el_anchor.add_widget(focus_element)
 	
 	# Add parents to web:
-    for id in self.focus.parents:
-      parent_data = self.root_link.web_data.elements['e' + str(id)]
-      parent_el = Element(element_data=parent_data,
-                          root_link=self.root_link,
-                          details_link=self.root_link.element_details
-                          )
-      self.parent_layout.add_widget(parent_el)
+    self.createLinkLayout('parents')
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
       # Add enemies:
-      for id in self.focus.enemies:
-        enemy_data = self.root_link.web_data.elements['e' + str(id)]
-        enemy_el = Element(element_data=enemy_data,
-                            root_link=self.root_link,
-                            details_link=self.root_link.element_details
-                            )
-        self.enemies_layout.add_widget(enemy_el)	
-
+      self.createLinkLayout('enemies')
+		
       # Add allies:
-      for id in self.focus.allies:
-        ally_data = self.root_link.web_data.elements['e' + str(id)]
-        ally_el = Element(element_data=ally_data,
-                          root_link=self.root_link,
-                          details_link=self.root_link.element_details
-                          )
-        self.allies_layout.add_widget(ally_el)
+      self.createLinkLayout('allies')
 	  
     # Add children to the web:
     # First set up some boolean toggles, which will be altered as needed depending on
@@ -336,67 +441,82 @@ class ElementWeb(BoxLayout):
         need_title = True
       else:
         need_agnostic = True
-    
+	
     # Add different layouts depending on the boolean toggles:
     if need_agnostic:
-      agnostic_layout = LinkedElTray()
-      self.child_layout_size += .2	  
-      self.child_layout.add_widget(agnostic_layout)
+      self.agnostic_layout = LinkedElTray()
+      self.child_layout_width_hint += .2	  
+      self.child_layout.add_widget(self.agnostic_layout)
+      _, agnostic_height = self.createLinkLayout('Agnostic')
+      if child_layout_height < agnostic_height:
+        child_layout_height = agnostic_height
 	  
     if need_agent:
-      agent_layout = LinkedElTray()
-      self.child_layout_size += .2	  
-      self.child_layout.add_widget(agent_layout)
+      self.agent_layout = LinkedElTray()
+      self.child_layout_width_hint += .2	  
+      self.child_layout.add_widget(self.agent_layout)
+      _, agent_height = self.createLinkLayout('Agent')
+      if self.child_layout_height < agent_height:
+        self.child_layout_height = agent_height	  
 
     if need_asset:
-      asset_layout = LinkedElTray()
-      self.child_layout_size += .2	  	  
-      self.child_layout.add_widget(asset_layout)
+      self.asset_layout = LinkedElTray()
+      self.child_layout_width_hint += .2	  	  
+      self.child_layout.add_widget(self.asset_layout)
+      _, asset_height = self.createLinkLayout('Asset')
+      if self.child_layout_height < asset_height:
+        self.child_layout_height = asset_height	  
 
     if need_blackmail:
-      blackmail_layout = LinkedElTray()
-      self.child_layout_size += .2	  	  
-      self.child_layout.add_widget(blackmail_layout)
+      self.blackmail_layout = LinkedElTray()
+      self.child_layout_width_hint += .2	  	  
+      self.child_layout.add_widget(self.blackmail_layout)
+      _, blackmail_height = self.createLinkLayout('Blackmail')
+      if self.child_layout_height < blackmail_height:
+        self.child_layout_height = blackmail_height
 
     if need_title:
-      title_layout = LinkedElTray()
-      self.child_layout_size += .2	  	  
-      self.child_layout.add_widget(title_layout)	  
+      self.title_layout = LinkedElTray()
+      self.child_layout_width_hint += .2	  	  
+      self.child_layout.add_widget(self.title_layout)
+      _, title_height = self.createLinkLayout('Title')
+      if self.child_layout_height < title_height:
+        self.child_layout_height = title_height  
 
     # Finally, add child elements to the created layouts, matching the appropriate type
     # to the appropriate layout:
-    for id in self.focus.children:
-      child_data = self.root_link.web_data.elements['e' + str(id)]
-      if child_data.type == 'Agent':
-        child_element = Element(element_data=child_data,
-                                root_link=self.root_link,
-                                details_link=self.root_link.element_details
-                                )
-        agent_layout.add_widget(child_element)								
-      elif child_data.type == 'Asset':
-        child_element = Element(element_data=child_data,
-                                root_link=self.root_link,
-                                details_link=self.root_link.element_details
-                                )
-        asset_layout.add_widget(child_element)
-      elif child_data.type == 'Blackmail':
-        child_element = Element(element_data=child_data,
-                                root_link=self.root_link,
-                                details_link=self.root_link.element_details
-                                )
-        blackmail_layout.add_widget(child_element)
-      elif child_data.type == 'Title':
-        child_element = Element(element_data=child_data,
-                                root_link=self.root_link,
-                                details_link=self.root_link.element_details
-                                )
-        title_layout.add_widget(child_element)
-      else:
-        child_element = Element(element_data=child_data,
-                                root_link=self.root_link,
-                                details_link=self.root_link.element_details
-                                )
-        agnostic_layout.add_widget(child_element)
+    # for id in self.focus.children:
+      # child_data = self.root_link.web_data.elements['e' + str(id)]
+      # if child_data.type == 'Agent':
+        # child_element = Element(element_data=child_data,
+                                # root_link=self.root_link,
+                                # details_link=self.root_link.element_details
+                                # )
+        # agent_layout.add_widget(child_element)								
+      # elif child_data.type == 'Asset':
+        # child_element = Element(element_data=child_data,
+                                # root_link=self.root_link,
+                                # details_link=self.root_link.element_details
+                                # )
+        # asset_layout.add_widget(child_element)
+      # elif child_data.type == 'Blackmail':
+        # child_element = Element(element_data=child_data,
+                                # root_link=self.root_link,
+                                # details_link=self.root_link.element_details
+                                # )
+        # blackmail_layout.add_widget(child_element)
+      # elif child_data.type == 'Title':
+        # child_element = Element(element_data=child_data,
+                                # root_link=self.root_link,
+                                # details_link=self.root_link.element_details
+                                # )
+        # title_layout.add_widget(child_element)
+      # else:
+        # child_element = Element(element_data=child_data,
+                                # root_link=self.root_link,
+                                # details_link=self.root_link.element_details
+                                # )
+        # agnostic_layout.add_widget(child_element)
 		
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(AnchorLayout):
@@ -405,6 +525,14 @@ class WebRegion(AnchorLayout):
 # Used to store linked elements in a neat stack:
 class LinkedElTray(BoxLayout):
   pass
+  
+# Used to hold the unlink button and anchor layout that holds linked elements:
+class LinkHolder(BoxLayout):
+  root_link = ObjectProperty(None)
+  element_id = NumericProperty(None)
+  link_anchor = ObjectProperty(None)
+  unlinker_type = StringProperty()
+  holder_height = NumericProperty(None)
   
 # All visible widgets in the ElementWeb and ElementFlat are Elements of various types.
 class Element(Button):
