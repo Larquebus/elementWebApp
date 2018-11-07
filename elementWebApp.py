@@ -315,13 +315,17 @@ class ElementWeb(BoxLayout):
   child_layout_width_hint = NumericProperty(0)
   child_layout_height = NumericProperty(0)
   child_layout = ObjectProperty(None)
+  # Used to set up the sub layouts of the child_layout. Child types is used to 
+  # keep the layouts in the same order every time:
+  child_types = ListProperty(['Agent', 'Asset', 'Blackmail', 'Title', 'Party', 'Agnostic'])
+  focus_children_types = DictProperty(None)
   # Sub layouts of the child_layout:
-  agnostic_layout = ObjectProperty(None)
   agent_layout = ObjectProperty(None)
   asset_layout = ObjectProperty(None)
   blackmail_layout = ObjectProperty(None)
   title_layout = ObjectProperty(None)
-  
+  party_layout = ObjectProperty(None)
+  agnostic_layout = ObjectProperty(None)
   
   def createLinkLayout(self, layout_type):
     links_to_loop = []
@@ -346,6 +350,8 @@ class ElementWeb(BoxLayout):
         target_layout = self.blackmail_layout
       elif layout_type == 'Title':
         target_layout = self.title_layout
+      elif layout_type == 'Party':
+        target_layout = self.party_layout		
       else:
         target_layout = self.agnostic_layout	  
 
@@ -361,7 +367,8 @@ class ElementWeb(BoxLayout):
         if (data.type == 'Agent'
             or data.type == 'Asset'
             or data.type == 'Blackmail'
-            or data.type == 'Title'):		
+            or data.type == 'Title'
+            or data.type == 'Party'):		
           continue
         else:
           pass
@@ -420,103 +427,47 @@ class ElementWeb(BoxLayout):
       self.createLinkLayout('allies')
 	  
     # Add children to the web:
-    # First set up some boolean toggles, which will be altered as needed depending on
-	# what types of children the focus element has:
-    need_agent = False
-    need_asset = False
-    need_blackmail = False
-    need_title = False
-    need_agnostic = False
-	
-    # Check each child's type and toggle booleans:
+    # Check each child's type and set up the necessary layouts that will need to be populated:
     for id in self.focus.children:
       child_el = self.root_link.web_data.elements['e' + str(id)]
-      if child_el.type == 'Agent':
-        need_agent = True
-      elif child_el.type == 'Asset':
-        need_asset = True
-      elif child_el.type == 'Blackmail':
-        need_blackmail = True
-      elif child_el.type == 'Title':
-        need_title = True
-      else:
-        need_agnostic = True
-	
-    # Add different layouts depending on the boolean toggles:
-    if need_agnostic:
-      self.agnostic_layout = LinkedElTray()
-      self.child_layout_width_hint += .2	  
-      self.child_layout.add_widget(self.agnostic_layout)
-      _, agnostic_height = self.createLinkLayout('Agnostic')
-      if child_layout_height < agnostic_height:
-        child_layout_height = agnostic_height
+      if child_el.type == 'Agent':	  
+        self.agent_layout = LinkedElTray()
+        self.focus_children_types['Agent'] = self.agent_layout
+      elif child_el.type == 'Asset':	  
+        self.asset_layout = LinkedElTray()
+        self.focus_children_types['Asset'] = self.asset_layout
+      elif child_el.type == 'Blackmail':	  
+        self.blackmail_layout = LinkedElTray()
+        self.focus_children_types['Blackmail'] = self.blackmail_layout
+      elif child_el.type == 'Title':	  
+        self.title_layout = LinkedElTray()
+        self.focus_children_types['Title'] = self.title_layout
+      elif child_el.type == 'Party':	  
+        self.party_layout = LinkedElTray()
+        self.focus_children_types['Party'] = self.party_layout		
+      else:		  
+        self.agnostic_layout = LinkedElTray()
+        self.focus_children_types['Agnostic'] = self.agnostic_layout
+
+	# Set the child_layout_width_hint based on how many layouts are needed:
+    self.child_layout_width_hint = len(self.focus_children_types) * .2	
+    # This is just insurance, it should be impossible for child_layout_width_hint to 
+    # exceed 1:	
+    if self.child_layout_width_hint > 1:
+      self.child_layout_width_hint = 1 
 	  
-    if need_agent:
-      self.agent_layout = LinkedElTray()
-      self.child_layout_width_hint += .2	  
-      self.child_layout.add_widget(self.agent_layout)
-      _, agent_height = self.createLinkLayout('Agent')
-      if self.child_layout_height < agent_height:
-        self.child_layout_height = agent_height	  
-
-    if need_asset:
-      self.asset_layout = LinkedElTray()
-      self.child_layout_width_hint += .2	  	  
-      self.child_layout.add_widget(self.asset_layout)
-      _, asset_height = self.createLinkLayout('Asset')
-      if self.child_layout_height < asset_height:
-        self.child_layout_height = asset_height	  
-
-    if need_blackmail:
-      self.blackmail_layout = LinkedElTray()
-      self.child_layout_width_hint += .2	  	  
-      self.child_layout.add_widget(self.blackmail_layout)
-      _, blackmail_height = self.createLinkLayout('Blackmail')
-      if self.child_layout_height < blackmail_height:
-        self.child_layout_height = blackmail_height
-
-    if need_title:
-      self.title_layout = LinkedElTray()
-      self.child_layout_width_hint += .2	  	  
-      self.child_layout.add_widget(self.title_layout)
-      _, title_height = self.createLinkLayout('Title')
-      if self.child_layout_height < title_height:
-        self.child_layout_height = title_height  
-
-    # Finally, add child elements to the created layouts, matching the appropriate type
-    # to the appropriate layout:
-    # for id in self.focus.children:
-      # child_data = self.root_link.web_data.elements['e' + str(id)]
-      # if child_data.type == 'Agent':
-        # child_element = Element(element_data=child_data,
-                                # root_link=self.root_link,
-                                # details_link=self.root_link.element_details
-                                # )
-        # agent_layout.add_widget(child_element)								
-      # elif child_data.type == 'Asset':
-        # child_element = Element(element_data=child_data,
-                                # root_link=self.root_link,
-                                # details_link=self.root_link.element_details
-                                # )
-        # asset_layout.add_widget(child_element)
-      # elif child_data.type == 'Blackmail':
-        # child_element = Element(element_data=child_data,
-                                # root_link=self.root_link,
-                                # details_link=self.root_link.element_details
-                                # )
-        # blackmail_layout.add_widget(child_element)
-      # elif child_data.type == 'Title':
-        # child_element = Element(element_data=child_data,
-                                # root_link=self.root_link,
-                                # details_link=self.root_link.element_details
-                                # )
-        # title_layout.add_widget(child_element)
-      # else:
-        # child_element = Element(element_data=child_data,
-                                # root_link=self.root_link,
-                                # details_link=self.root_link.element_details
-                                # )
-        # agnostic_layout.add_widget(child_element)
+    # Loop over the child_types property (which keeps the layouts in the same order each time)
+	# and populate the layouts:
+    for type in self.child_types:
+      # Try skips types that are not needed:
+      try:
+        self.child_layout.add_widget(self.focus_children_types[type])
+      except KeyError:
+        continue
+      else:
+        _, one_time_height = self.createLinkLayout(type)
+        if self.child_layout_height < one_time_height:
+          self.child_layout_height = one_time_height
 		
 # Used to block out the sub-regions of the ElementWeb window:
 class WebRegion(AnchorLayout):
@@ -622,7 +573,7 @@ class NewElement(BoxLayout):
       
     # Populate dropdown with types from the web's meta_data:
     for type in app.root.web_data.meta_data["available_types"]:
-      btn = Button(text=type, size_hint_y=None, height=25, background_normal='')
+      btn = Button(text=type, size_hint_y=None, height=25, background_normal='', color=[0, 0, 0, 1])
       color_array = app.root.web_data.type_colors_kivy[type] 
       btn.background_color=color_array		
       btn.bind(on_release=lambda btn: dropdown.select(btn.text))
