@@ -108,6 +108,7 @@
 						id: enemy_linker
 						linker_type: 'enemies'
 						search_orientation: 'left'
+                        disabled: root.disable_relationships
 				BoxLayout:
 					orientation: 'vertical'
 					padding: 5
@@ -126,6 +127,7 @@
 					LinkElement:
 						id: ally_linker
 						linker_type: 'allies'
+						disabled: root.disable_relationships
 			WebRegion:
 				size_hint_y: 1
 				LinkedElTray:

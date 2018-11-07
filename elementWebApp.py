@@ -41,6 +41,9 @@ class AppFrame(Widget):
   def updateElementLinks(self, link_type_to_update, id_to_link):
     element_to_update = self.focus_element
 	
+    # First check all link lists in the element_to_update's element_dict and look
+	# for the id_to_link:
+	
     # First update the primary element:
     try:
       element_to_update.element_dict[link_type_to_update].append(id_to_link)
@@ -294,6 +297,7 @@ class ElementFlat(StackLayout):
 class ElementWeb(BoxLayout):
   root_link = ObjectProperty(None)  
   focus = ObjectProperty(None)
+  disable_relationships = BooleanProperty(True)
   
   parent_layout = ObjectProperty(None)
   
@@ -412,6 +416,8 @@ class ElementWeb(BoxLayout):
 
     # Add enemies and allies to web:
     if (self.focus.type == 'NPC' or self.focus.type == 'Player'):
+      self.disable_relationships = False
+
       # Add enemies:
       self.createLinkLayout('enemies')
 		
