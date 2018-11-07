@@ -43,6 +43,23 @@ class AppFrame(Widget):
 	
     # First check all link lists in the element_to_update's element_dict and look
 	# for the id_to_link:
+    lists_to_check = {}
+    lists_to_check['parents'] = element_to_update.parents
+    lists_to_check['children'] = element_to_update.children
+    if (element_to_update.type == 'NPC' or element_to_update.type == 'Player'):
+      lists_to_check['allies'] = element_to_update.allies
+      lists_to_check['enemies'] = element_to_update.enemies
+	  
+    # If the id_to_link is already linked to the focus, unLink it. This solves 
+	# creation of duplicate links AND makes it easy to move links from one type to 
+	# another in one stroke:
+    for key in lists_to_check:
+      try:
+        lists_to_check[key].index(id_to_link)
+      except ValueError:
+        continue
+      else:
+        self.unLink(key, id_to_link)
 	
     # First update the primary element:
     try:
