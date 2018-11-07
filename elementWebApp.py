@@ -29,53 +29,47 @@ class AppFrame(Widget):
   app_float = ObjectProperty(None)
   search_res_display = ObjectProperty(None)
   
-  # Updates values for whatever element is currently selected, saves the element back to the web:
-  def updateElement(self, value_to_update, new_value, mode='selected', dims='single'):
-    element_to_update = None
-    if mode == 'selected':
-      element_to_update = self.selected_element
-    else:
-      element_to_update = self.focus_element
-
-    # These lines are repetitive... clean up somehow?
-    if dims == 'single':
-      element_to_update.element_dict[value_to_update] = new_value
-      self.web_data.elements[element_to_update.element_key].element_dict[value_to_update] = new_value
-    else:
-      # Currently the only other dims option is a 'multi' dimensional update, which requires an 
-	  # update to a list attribute of an Element, and which also must be reciprocated to 
-	  # the paired element.
-
-      # First update the primary element:
-      try:
-        element_to_update.element_dict[value_to_update].append(new_value)
-      except KeyError:
-        element_to_update.element_dict[value_to_update] = []
-        element_to_update.element_dict[value_to_update].append(new_value)
-
-      reciprocate_val_to_update = ''
-
-      # For parent and child links we need to update the opposite value for the reciprocate:
-      if value_to_update == 'parents':
-        reciprocate_val_to_update = 'children'
-      elif value_to_update == 'children':
-        reciprocate_val_to_update = 'parents'
-      else: 
-        reciprocate_val_to_update = value_to_update
-
-      # Next reciprocate the link between the primary and secondary element:
-      reciprocate_element = self.web_data.elements['e' + str(new_value)]
-      element_to_update_id = element_to_update.id
-      try:
-        reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
-      except KeyError:
-        reciprocate_element.element_dict[reciprocate_val_to_update] = []
-        reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
-      self.web_data.elements[reciprocate_element.element_key].resynchronize()
-
-    # Do these last steps for all modes and values:
-    self.web_data.elements[element_to_update.element_key].resynchronize()
+  # Updates values in the detail for the currently selected element, saves back to web:
+  def updateElementDetails(self, value_to_update, new_value):
+    selected_key = self.selected_element.element_key
+    self.selected_element.element_dict[value_to_update] = new_value
+    self.web_data.elements[selected_key].element_dict[value_to_update] = new_value
+    self.web_data.elements[selected_key].resynchronize()
     self.web_data.save()
+
+  # Updates links to the focus element and reciprocates those links, saves back to web:
+  def updateElementLinks(self, link_type_to_update, id_to_link):
+    element_to_update = self.focus_element
+	
+    # First update the primary element:
+    try:
+      element_to_update.element_dict[link_type_to_update].append(id_to_link)
+    except KeyError:
+      element_to_update.element_dict[link_type_to_update] = []
+      element_to_update.element_dict[link_type_to_update].append(id_to_link)
+
+    reciprocate_val_to_update = ''
+
+    # For parent and child links we need to update the opposite value for the reciprocate:
+    if link_type_to_update == 'parents':
+      reciprocate_val_to_update = 'children'
+    elif link_type_to_update == 'children':
+      reciprocate_val_to_update = 'parents'
+    else: 
+      reciprocate_val_to_update = link_type_to_update
+
+    # Next reciprocate the link between the primary and secondary element:
+    reciprocate_element = self.web_data.elements['e' + str(id_to_link)]
+    element_to_update_id = element_to_update.id
+    try:
+      reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
+    except KeyError:
+      reciprocate_element.element_dict[reciprocate_val_to_update] = []
+      reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
+    self.web_data.elements[reciprocate_element.element_key].resynchronize()
+
+    self.web_data.elements[element_to_update.element_key].resynchronize()
+    self.web_data.save()  
 	
   # Removes a specified link type to a specified element from the focus element:
   def unLink(self, link_type_to_remove, id_to_remove):
@@ -227,11 +221,9 @@ class SearchResultBtn(Button):
         self.root_link.static_search_bar.text = ''
       # For searches called by a linker button, link the selected element to the focus:
       else:
-        self.root_link.updateElement(value_to_update=self.parent_linker_type, 
-                                     new_value=self.element_data.id, 
-                                     mode='focus', 
-                                     dims='multi'
-                                     )
+        self.root_link.updateElementLinks(link_type_to_update=self.parent_linker_type, 
+                                          id_to_link=self.element_data.id
+                                          )
       self.root_link.remove_widget(self.root_link.app_float)	
       self.root_link.element_display.display_window.activateDisplay('web')
 	
@@ -362,7 +354,7 @@ class ElementWeb(BoxLayout):
       data = self.root_link.web_data.elements['e' + str(id)]
       # For child layout building, each child in links_to_loop must have its type
       # verified to make sure it matches type_layout and can thus be safely added to
-	  # the appropriate layout:
+	  # the target_layout:
       if check_link_el_type and layout_type == 'Agnostic':
         if (data.type == 'Agent'
             or data.type == 'Asset'
@@ -548,11 +540,9 @@ class NewElement(BoxLayout):
     app.root.web_data.save()
     # If the NewElement object was created from a linker's search, we need to link it to the focus:
     if self.link_to_focus:
-      app.root.updateElement(value_to_update=self.parent_linker_type, 
-                             new_value=new_element_id, 
-                             mode='focus', 
-                             dims='multi'
-                             )
+      app.root.updateElementLinks(link_type_to_update=self.parent_linker_type, 
+                                  id_to_link=new_element_id
+                                  )
       app.root.remove_widget(app.root.app_float)	
     app.root.element_display.display_window.activateDisplay(self.parent_display_type)
     if self.parent_display_type =='flat':
@@ -653,7 +643,7 @@ class RankDropdown(DropDown):
   def onSelect(self, btn_to_change, selected_rank):
     app = App.get_running_app()
     setattr(btn_to_change, 'text', selected_rank)
-    app.root.updateElement('rank', selected_rank)
+    app.root.updateElementDetails('rank', selected_rank)
 	
 class CauseInput(TextInput):
   root_link = ObjectProperty(None)
