@@ -252,7 +252,33 @@
 	Label:
 		text: self.parent.stat
 		color: [0, 0, 0, 1]
-		pos: self.parent.pos	
+		pos: self.parent.pos
+		
+<StatToggles>:
+	high_btn: high_btn
+	med_btn: med_btn
+	low_btn: low_btn
+	pos: self.pos
+	orientation: 'horizontal'
+	size_hint: 1, .1
+	ToggleButton:
+		id: high_btn
+		group: self.parent.stat_group
+		text: 'H'
+		size_hint: .3, 1
+		on_press: self.parent.setStat(self.parent.stat_group, 0)
+	ToggleButton:
+		id: med_btn
+		group: self.parent.stat_group
+		text: 'M'
+		size_hint: .3, 1
+		on_press: self.parent.setStat(self.parent.stat_group, 1)
+	ToggleButton:
+		id: low_btn
+		group: self.parent.stat_group
+		text: 'L'
+		size_hint: .3, 1
+		on_press: self.parent.setStat(self.parent.stat_group, 2)
 
 # Build the widget tree:	
 <AppFrame>:

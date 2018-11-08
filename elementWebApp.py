@@ -3,6 +3,7 @@ from kivy.uix.widget import Widget
 from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.button import Button
+from kivy.uix.togglebutton import ToggleButton
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
@@ -30,10 +31,17 @@ class AppFrame(Widget):
   search_res_display = ObjectProperty(None)
   
   # Updates values in the detail for the currently selected element, saves back to web:
-  def updateElementDetails(self, value_to_update, new_value):
+  def updateElementDetails(self, value_to_update, new_value, sub_value_to_update=None):
     selected_key = self.selected_element.element_key
-    self.selected_element.element_dict[value_to_update] = new_value
-    self.web_data.elements[selected_key].element_dict[value_to_update] = new_value
+    if sub_value_to_update == None:
+      self.selected_element.element_dict[value_to_update] = new_value
+      self.web_data.elements[selected_key].element_dict[value_to_update] = new_value
+    else:
+      self.selected_element.element_dict[value_to_update][sub_value_to_update] = new_value
+      self.web_data.elements[selected_key].element_dict[value_to_update][sub_value_to_update] = new_value
+	# I genuinely don't know if these next two lines are necessary because the program 
+	# seems to save changes made to elements/web_data that it shouldn't be saving???
+	# Frankly, I'm terrified.
     self.web_data.elements[selected_key].resynchronize()
     self.web_data.save()
 
@@ -61,7 +69,7 @@ class AppFrame(Widget):
       else:
         self.unLink(key, id_to_link)
 	
-    # First update the primary element:
+    # First update element_to_update:
     try:
       element_to_update.element_dict[link_type_to_update].append(id_to_link)
     except KeyError:
@@ -78,7 +86,7 @@ class AppFrame(Widget):
     else: 
       reciprocate_val_to_update = link_type_to_update
 
-    # Next reciprocate the link between the primary and secondary element:
+    # Next reciprocate the link between element_to_update and the reciprocate_element:
     reciprocate_element = self.web_data.elements['e' + str(id_to_link)]
     element_to_update_id = element_to_update.id
     try:
@@ -88,6 +96,9 @@ class AppFrame(Widget):
       reciprocate_element.element_dict[reciprocate_val_to_update].append(element_to_update_id)
     self.web_data.elements[reciprocate_element.element_key].resynchronize()
 
+	# I genuinely don't know if these next two lines are necessary because the program 
+	# seems to save changes made to elements/web_data that it shouldn't be saving???
+	# Frankly, I'm terrified.
     self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()  
 	
@@ -527,7 +538,6 @@ class Element(Button):
   
   def selectElement(self):
     self.root_link.selected_element = self.element_data
-    print('Selected ' + self.element_data.name)
     self.notes_container_link.activateElementNotes()
     self.display_label_link.text = 'Currently selected: ' + self.element_name
     self.type_content_link.addTypeContent(self.element_data.type)
@@ -557,7 +567,7 @@ class NewElement(BoxLayout):
       new_element_dict["rank"] = 'None'
       new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
     elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
-      new_element_dict["stats"] = {"Clout": 0}
+      new_element_dict["stats"] = {"Clout": -1}
       new_element_dict["cause"] = ""
     new_element_id = app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
@@ -661,6 +671,18 @@ class ElementNotes(TextInput):
   
 class StatBubble(Widget):
   stat = StringProperty()
+  
+class StatToggles(BoxLayout):
+  high_btn = ObjectProperty(None)
+  med_btn = ObjectProperty(None)
+  low_btn = ObjectProperty(None)
+  stat_group = StringProperty()
+  stat_val = NumericProperty()
+  
+  def setStat(self, stat, stat_val):
+    app = App.get_running_app()
+    app.root.updateElementDetails('stats', stat_val, stat)
+    app.root.element_details.type_content.addTypeContent(app.root.selected_element.type)
 	  
 class RankDropdown(DropDown):
   def onSelect(self, btn_to_change, selected_rank):
@@ -679,21 +701,42 @@ class TypeSpecificContent(BoxLayout):
 	
 	# Add stat display for appropriate types:
     if (type == 'NPC' or type == 'Faction' or type == 'Party'):
-      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos, size_hint_y=.6)
+      if type == 'NPC':
+        stat_display_size = .7
+      else:
+        stat_display_size = .44
+      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos, size_hint_y=stat_display_size)
 
 	  # Set up the stats to loop over (if needed) when creating the stat grid based on the 
 	  # element's type:
       if (type == 'Faction' or type == 'Party'):
-        # Create a widget to hold the bubble and label:
-        stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
+        # Create a widget to hold the bubble label, and toggles:
+        stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
 		
         # Grab "Clout" from the stats dict and create a bubble for it:
-        stat_bubble = StatBubble(stat='d' + str(app.root.selected_element.stats["Clout"]))
+        clout_list = [10, 8, 6]
+        clout_position = app.root.selected_element.stats["Clout"]
+        clout_val = -1
+        if clout_position == -1:
+          clout_val = 0
+        else:
+          clout_val = clout_list[clout_position]
+        stat_bubble = StatBubble(stat='d' + str(clout_val))
         stat_holder.add_widget(stat_bubble)
         
 		# Add a Clout label:
-        stat_label = Label(text='Clout', color=[0, 0, 0, 1])
+        stat_label = Label(text='Clout', color=[0, 0, 0, 1], size_hint_y=0.2)
         stat_holder.add_widget(stat_label)
+		
+        # Add StatToggles:
+        stat_toggles = StatToggles(stat_group='Clout')
+        if clout_position == 0:
+          stat_toggles.high_btn.state = 'down'
+        elif clout_position == 1:
+          stat_toggles.med_btn.state = 'down'
+        elif clout_position == 2:
+          stat_toggles.low_btn.state = 'down'			
+        stat_holder.add_widget(stat_toggles)
 		
         stat_display.add_widget(stat_holder)
       elif type == 'NPC':
@@ -709,8 +752,8 @@ class TypeSpecificContent(BoxLayout):
 		
 		# First loop over the first 3 items in stats_to_loop to put them in alpha order:
         for i in alpha_stats:
-          # Create a widget to hold the bubble and label:
-          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
+          # Create a widget to hold the bubble, label, and toggles:
+          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
 		  
 		  # Get the high/medium/low (0/1/2) index of the current stat and create a bubble for it:
           stat_position = app.root.selected_element.stats[i]
@@ -722,26 +765,40 @@ class TypeSpecificContent(BoxLayout):
           stat_bubble = StatBubble(stat='d' + str(stat_value))
 		  
 		  # Add the appropriate stat label:
-          stat_label = Label(text=i, color=[0, 0, 0, 1], size_hint_y=0.1)
+          stat_label = Label(text=i, color=[0, 0, 0, 1], size_hint_y=0.2)
 		  
+          # Determine which button should be down and add stat toggles:
+          stat_toggles = StatToggles(stat_group=i)
+          if stat_position == 0:
+            stat_toggles.high_btn.state = 'down'
+          elif stat_position == 1:
+            stat_toggles.med_btn.state = 'down'
+          elif stat_position == 2:
+            stat_toggles.low_btn.state = 'down'		  
+          		  
 		  # Add the bubble and then the label to the BoxLayout holder widget:
           stat_holder.add_widget(stat_bubble)
           stat_holder.add_widget(stat_label)
+          stat_holder.add_widget(stat_toggles)
 		  
           stat_display.add_widget(stat_holder)
         
 		# Now loop over the remaining items in stats_to_loop (rank_stats):
         for i in rank_stats:
           # Create a widget to hold the bubble and a dummy label:
-          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, None))
+          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
 		  
 		  # Add the stat bubble:
           stat_bubble = StatBubble(stat='d' + str(i))
           stat_holder.add_widget(stat_bubble)
 		  
 		  # Add a dummy label:
-          stat_label = Label(text="Rank", color=[1, 1, 1, 1], size_hint_y=0.1)
+          stat_label = Label(text="Rank", color=[1, 1, 1, 1], size_hint_y=0.2)
           stat_holder.add_widget(stat_label)
+		  
+          # Add a dummy toggle:
+          dummy_toggle = Label(text='None', color=[1, 1, 1, 1], size_hint_y=0.2)
+          stat_holder.add_widget(dummy_toggle)
           
           stat_display.add_widget(stat_holder)
 
