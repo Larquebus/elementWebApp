@@ -60,7 +60,15 @@ class elementData:
       except KeyError:
         self.element_dict["enemies"] = []
         self.enemies = self.element_dict["enemies"]
-	
+
+    # For Player elements, set up agenda attribute:
+    if self.type == 'Player':
+      try:
+        self.agenda = self.element_dict["agenda"]
+      except KeyError:
+        self.element_dict["agenda"] = {"ambition": '', "opposition": '', "objectives": []}
+        self.agenda = self.element_dict["agenda"]
+		
   def resynchronize(self):
     self.type = self.element_dict["type"]
     self.name = self.element_dict["name"]
