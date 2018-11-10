@@ -195,7 +195,7 @@ class SearchOverlay(FloatLayout):
     app = App.get_running_app()
     if (self.input_obj.collide_point(*touch.pos) or
         self.results_obj.collide_point(*touch.pos)):
-      super(FloatLayout, self).on_touch_down(touch)
+      super(FloatLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
       return True
     else:
       self.input_obj.text = ''
@@ -266,7 +266,7 @@ class SearchResultBtn(Button):
     if self.collide_point(*touch.pos):
       touch.grab(self)
       touch.ungrab(self)
-      super(Button, self).on_touch_down(touch)
+      super(Button, self).on_touch_down(touch) #This lets the touch act on the button.
       return True
 	
 """
@@ -365,6 +365,7 @@ class ElementWeb(BoxLayout):
   def createLinkLayout(self, layout_type):
     links_to_loop = []
     check_link_el_type = False
+    unlinker_type = layout_type
     if layout_type == 'parents':
       links_to_loop = self.focus.parents
       target_layout = self.parent_layout
@@ -376,6 +377,7 @@ class ElementWeb(BoxLayout):
       target_layout = self.allies_layout
     else:
       links_to_loop = self.focus.children
+      unlinker_type = 'children'
       check_link_el_type = True
       if layout_type == 'Agent':
         target_layout = self.agent_layout	
@@ -421,7 +423,7 @@ class ElementWeb(BoxLayout):
                                        # it to set sizes for layouts and such.
       holder = LinkHolder(root_link=self.root_link,
                           element_id = data.id,
-                          unlinker_type=layout_type,
+                          unlinker_type=unlinker_type,
                           holder_height=element_to_hold.texture_size[1]
                           )						  
       holder.link_anchor.add_widget(element_to_hold)
