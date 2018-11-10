@@ -132,7 +132,15 @@ class webData:
       return results
     
     for element in self.elements:
-      check = re.search(search_str.lower(), self.elements[element].name.lower())
+      if search_str.lower()[0:6:] == 'type: ':
+        check = re.search(search_str.lower()[6::], self.elements[element].type.lower())
+      elif search_str.lower()[0:6:] == 'rank: ':
+        try:
+          check = re.search(search_str.lower()[6::], self.elements[element].rank.lower())
+        except AttributeError:
+          continue
+      else:
+        check = re.search(search_str.lower(), self.elements[element].name.lower())
       filter_passed = False
       if filter == 'type:char':
         if (self.elements[element].type == 'NPC' or self.elements[element].type == 'Player'):
