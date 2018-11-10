@@ -146,8 +146,9 @@ class SearchBar(TextInput):
     app = App.get_running_app()
     search_results = app.root.web_data.search(search_str, filter)
     if len(search_results) > 0:
-      self.results_tray_link.clear_widgets()
+      
       if self.parent_display_type == 'web':
+        self.results_tray_link.clear_widgets()
         self.results_view_link.num_results = len(search_results) + 1
         add_new_element_btn = SearchResultBtn(root_link=app.root, 
                                               text='Add new element...', 
@@ -157,35 +158,43 @@ class SearchBar(TextInput):
                                               )
         self.results_tray_link.add_widget(add_new_element_btn)
 		
-    for element in search_results:
-      data = app.root.web_data.elements[search_results[element]]
-      result = SearchResultBtn(element_data=data,
-                               root_link=app.root,
-                               text=element,
-                               parent_linker_type=self.parent_linker_type,
-                               parent_display_type=self.parent_display_type							   
-                               )
-      result.parent_linker_type=self.parent_linker_type
-      self.results_tray_link.add_widget(result)
+        for element in search_results:
+          data = app.root.web_data.elements[search_results[element]]
+          result = SearchResultBtn(element_data=data,
+                                   root_link=app.root,
+                                   text=element,
+                                   parent_linker_type=self.parent_linker_type,
+                                   parent_display_type=self.parent_display_type							   
+                                   )
+          result.parent_linker_type=self.parent_linker_type
+          self.results_tray_link.add_widget(result)
+      elif self.parent_display_type == 'flat':
+        search_result_elements = {}
+        for key in search_results:
+          e_id = search_results[key]
+          search_result_elements[e_id] = app.root.web_data.elements[e_id]
+        app.root.element_display.display_window.flat_web.elements = search_result_elements
+        app.root.element_display.display_window.flat_web.getFlatElements()
   
   def on_focus(self, *args):
     app = App.get_running_app()
     if self.focus == True:
-      if self.results_orientation == 'above':
-        pos_for_results = [self.pos[0], self.pos[1] + self.height]
-      else:
-        pos_for_results = self.pos[0], self.pos[1] - 125
-      if self.parent_linker_type == None:
-        app.root.app_float = SearchOverlay(size=app.root.size)
-        app.root.app_float.input_obj = self
-        app.root.add_widget(app.root.app_float)
-      app.root.search_res_display = SearchResults(search_bar_width=self.width, 
-                                                  search_bar_pos=pos_for_results)
+      if self.parent_display_type == 'web':
+        if self.results_orientation == 'above':
+          pos_for_results = [self.pos[0], self.pos[1] + self.height]
+        else:
+          pos_for_results = self.pos[0], self.pos[1] - 125
+        if self.parent_linker_type == None:
+          app.root.app_float = SearchOverlay(size=app.root.size)
+          app.root.app_float.input_obj = self
+          app.root.add_widget(app.root.app_float)
+        app.root.search_res_display = SearchResults(search_bar_width=self.width, 
+                                                    search_bar_pos=pos_for_results)
       
-      app.root.app_float.add_widget(app.root.search_res_display)
-      app.root.app_float.results_obj = app.root.search_res_display	  
-      self.results_view_link = app.root.search_res_display	  
-      self.results_tray_link = app.root.search_res_display.results_tray  
+        app.root.app_float.add_widget(app.root.search_res_display)
+        app.root.app_float.results_obj = app.root.search_res_display	  
+        self.results_view_link = app.root.search_res_display	  
+        self.results_tray_link = app.root.search_res_display.results_tray  
 	  
 class SearchOverlay(FloatLayout):
   input_obj = ObjectProperty(None)
@@ -285,6 +294,7 @@ class ElementDisplayBar(BoxLayout):
 class ElementDisplayWindow(Widget):
   flat_web_scroll = ObjectProperty(None)
   web_layout = ObjectProperty(None)
+  flat_web = ObjectProperty(None)
   
   def activateDisplay(self, display_type):
     app = App.get_running_app()
@@ -292,12 +302,13 @@ class ElementDisplayWindow(Widget):
     if display_type == 'flat':
       app.root.static_search_bar.parent_display_type = 'flat'
       self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
-      flat_web = ElementFlat(root_link=app.root, 
-                             size=self.flat_web_scroll.size,
-                             pos=self.flat_web_scroll.pos
-                             )
-      flat_web.getFlatElements()
-      self.flat_web_scroll.add_widget(flat_web)
+      self.flat_web = ElementFlat(root_link=app.root, 
+                                  elements=app.root.web_data.elements,
+                                  size=self.flat_web_scroll.size,
+                                  pos=self.flat_web_scroll.pos
+                                  )
+      self.flat_web.getFlatElements()
+      self.flat_web_scroll.add_widget(self.flat_web)
       self.add_widget(self.flat_web_scroll)	
     elif display_type == 'web':
       app.root.static_search_bar.parent_display_type = 'web'	  
@@ -315,20 +326,20 @@ class ElementFlatScroll(ScrollView):
   
 class ElementFlat(StackLayout):
   root_link = ObjectProperty(None)
+  elements = DictProperty(None)
   
   # Loops through all Elements in the Web and adds them to the ScrollView:
   def getFlatElements(self):
     self.clear_widgets()
     counter = 0
-    for e_id in self.root_link.web_data.elements:
-      data = self.root_link.web_data.elements[e_id]
+    for e_id in self.elements:
+      data = self.elements[e_id]
       new_element = Element(element_data=data,
                             details_link=self.root_link.element_details,
                             root_link=self.root_link					
                             )
       self.add_widget(new_element)
       counter += 1
-    print("Added %i elements to flat element display." % counter)
     add_element_button = NewElement(parent_display_type='flat')
     self.add_widget(add_element_button)		
   
