@@ -176,14 +176,30 @@ class SearchBar(TextInput):
       else:
         pos_for_results = self.pos[0], self.pos[1] - 125
       if self.parent_linker_type == None:
-        app.root.app_float = FloatLayout(size=app.root.size)
+        app.root.app_float = SearchOverlay(size=app.root.size)
+        app.root.app_float.input_obj = self
         app.root.add_widget(app.root.app_float)
       app.root.search_res_display = SearchResults(search_bar_width=self.width, 
                                                   search_bar_pos=pos_for_results)
       
-      app.root.app_float.add_widget(app.root.search_res_display)	 
+      app.root.app_float.add_widget(app.root.search_res_display)
+      app.root.app_float.results_obj = app.root.search_res_display	  
       self.results_view_link = app.root.search_res_display	  
-      self.results_tray_link = app.root.search_res_display.results_tray
+      self.results_tray_link = app.root.search_res_display.results_tray  
+	  
+class SearchOverlay(FloatLayout):
+  input_obj = ObjectProperty(None)
+  results_obj = ObjectProperty(None)
+  
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (self.input_obj.collide_point(*touch.pos) or
+        self.results_obj.collide_point(*touch.pos)):
+      super(FloatLayout, self).on_touch_down(touch)
+      return True
+    else:
+      self.input_obj.text = ''
+      app.root.remove_widget(self)
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
@@ -195,18 +211,6 @@ class SearchResults(ScrollView):
   def on_num_results(self, *args):
     self.results_anchor.size = self.width, self.num_results * 25	  
 
-"""	
-  def on_touch_down(self, touch):
-    app = App.get_running_app()
-    if (touch.pos[0] >= self.search_pos[0] 
-        and touch.pos[0] <= self.search_pos[0] + self.search_size[0]
-	    and touch.pos[1] >= self.search_pos[1] 
-        and touch.pos[1] <= self.search_pos[0] + self.search_size[1]):
-      return False
-    else:
-      app.root.remove_widget(self)
-      return True
-"""
 class SearchResultBtn(Button):
   mode = StringProperty()
   element_data = ObjectProperty(None)
@@ -257,6 +261,13 @@ class SearchResultBtn(Button):
                                           )
       self.root_link.remove_widget(self.root_link.app_float)	
       self.root_link.element_display.display_window.activateDisplay('web')
+  
+  def on_touch_down(self, touch):
+    if self.collide_point(*touch.pos):
+      touch.grab(self)
+      touch.ungrab(self)
+      super(Button, self).on_touch_down(touch)
+      return True
 	
 """
 These widgets make up the left hand window of the application, which contains all widgets for the 
@@ -634,7 +645,8 @@ class LinkElement(BoxLayout):
     link_search_bar.parent_display_type='web'
     link_search_bar.parent_linker_type=self.linker_type
 	
-    app.root.app_float = FloatLayout(size=app.root.size)
+    app.root.app_float = SearchOverlay(size=app.root.size)
+    app.root.app_float.input_obj = link_search_bar
     app.root.add_widget(app.root.app_float)	
     app.root.app_float.add_widget(link_search_bar)
   
