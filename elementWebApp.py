@@ -551,26 +551,16 @@ class Element(Button):
   # Various objects designed to hold links to other widgets in the app that all Elements
   # need to be able to alter:
   root_link = ObjectProperty(None) # Used to access web meta_data.
-  details_link = ObjectProperty(None) # Used to set up the next three links.
-  notes_container_link = ObjectProperty(None) # Used to supply selected element notes.
-  display_label_link = ObjectProperty(None) # Used to supply what element is selected.
-  type_content_link = ObjectProperty(None) # Used to supply type-specifc content.  
+  details_link = ObjectProperty(None) # Used to access the details window.
   
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
     self.element_name = self.element_data.name
     self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
-
-    # Set up links:
-    self.notes_container_link = self.details_link.notes_container
-    self.display_label_link = self.details_link.detail_display_bar.detail_display_label
-    self.type_content_link = self.details_link.type_content
   
   def selectElement(self):
     self.root_link.selected_element = self.element_data
-    self.notes_container_link.activateElementNotes()
-    self.display_label_link.text = 'Currently selected: ' + self.element_name
-    self.type_content_link.addTypeContent(self.element_data.type)
+    self.details_link.activateElementDetails()
 	
   def on_touch_down(self, touch):
     if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
@@ -683,6 +673,12 @@ class ElementDetails(BoxLayout):
   notes_container = ObjectProperty(None)
   type_content = ObjectProperty(None)
   
+  def activateElementDetails(self):
+    selected_element = self.root_link.selected_element
+    self.notes_container.activateElementNotes()
+    self.detail_display_bar.detail_display_label.text = 'Currently selected: ' + selected_element.name
+    self.type_content.addTypeContent(selected_element.type)
+	
 class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
   
@@ -812,7 +808,10 @@ class Agenda(BoxLayout):
     for i in range(1, self.num_support + 1):
       supp_id = "supp_" + str(i)
       supp_dict[supp_id] = ''
-      support = TextInput(text=supp_dict[supp_id])
+      support = Support(text=supp_dict[supp_id],
+                        root_link=app.root,
+                        supp_id=supp_id
+                        )
       self.support_tray.add_widget(support)
     app.root.updateElementDetails(['support'], supp_dict) 
 
@@ -822,7 +821,10 @@ class Agenda(BoxLayout):
     for i in range(1, self.num_support + 1):
       supp_id = "supp_" + str(i)
       supp_data = self.player_element.support[supp_id]
-      support = TextInput(text=supp_data)
+      support = Support(text=supp_data,
+                        root_link=app.root,
+                        supp_id=supp_id
+                        )
       self.support_tray.add_widget(support)
 
   def clearAgenda(self):
@@ -837,11 +839,16 @@ class Objective(BoxLayout):
   complete_ind = BooleanProperty(False)
   objective_text = ObjectProperty(None)
   
+class Support(TextInput):
+  root_link = ObjectProperty(None)
+  supp_id = StringProperty()
+  
 class ScopeDropdown(DropDown):
   def onSelect(self, btn_to_change, selected_scope):
     app = App.get_running_app()
     setattr(btn_to_change, 'text', selected_scope)
     app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
+    app.root.selected_element.selectElement()
 
 class TypeSpecificContent(BoxLayout):
   
