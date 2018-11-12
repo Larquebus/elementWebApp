@@ -828,7 +828,13 @@ class Agenda(BoxLayout):
       self.support_tray.add_widget(support)
 
   def clearAgenda(self):
-    pass
+    app = App.get_running_app()
+    app.root.updateElementDetails(['agenda', 'ambition'], '')
+    app.root.updateElementDetails(['agenda', 'opposition'], '')
+    app.root.updateElementDetails(['agenda', 'scope'], '')
+    app.root.updateElementDetails(['objectives'], {})
+    app.root.updateElementDetails(['support'], {})
+    app.root.element_details.activateElementDetails()
   
 class AgendaInput(TextInput):
   pass
@@ -836,12 +842,14 @@ class AgendaInput(TextInput):
 class Objective(BoxLayout):
   root_link = ObjectProperty(None)
   obj_id = StringProperty()
+  complete_toggle = ObjectProperty(None)
   complete_ind = BooleanProperty(False)
   objective_text = ObjectProperty(None)
   
-  def on_complete_ind(self, *args):
-    if self.complete_ind:
-      checkbox_val = 1	
+  def completeObjToggle(self):
+    checkbox_val = 0
+    if self.complete_toggle.active:
+      checkbox_val = 1
     self.root_link.updateElementDetails(['objectives', self.obj_id, 'completed?'], checkbox_val)
   
 class Support(TextInput):

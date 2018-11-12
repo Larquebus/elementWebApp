@@ -337,6 +337,7 @@
 		
 		
 <Objective>:
+	complete_toggle: complete_toggle
 	objective_text: objective_text
 	orientation: 'horizontal'
 	AnchorLayout:
@@ -344,8 +345,9 @@
 		anchor_y: 'center'
 		size_hint_x: .1
 		CheckBox:
+			id: complete_toggle
 			active: root.complete_ind
-			on_active: root.complete_ind = self.active
+			on_active: root.completeObjToggle()
 	TextInput:
 		id: objective_text
 		on_text: root.root_link.updateElementDetails(['objectives', root.obj_id, 'obj_text'], self.text)
