@@ -839,6 +839,11 @@ class Objective(BoxLayout):
   complete_ind = BooleanProperty(False)
   objective_text = ObjectProperty(None)
   
+  def on_complete_ind(self, *args):
+    if self.complete_ind:
+      checkbox_val = 1	
+    self.root_link.updateElementDetails(['objectives', self.obj_id, 'completed?'], checkbox_val)
+  
 class Support(TextInput):
   root_link = ObjectProperty(None)
   supp_id = StringProperty()
@@ -848,7 +853,7 @@ class ScopeDropdown(DropDown):
     app = App.get_running_app()
     setattr(btn_to_change, 'text', selected_scope)
     app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
-    app.root.selected_element.selectElement()
+    app.root.element_details.activateElementDetails()
 
 class TypeSpecificContent(BoxLayout):
   

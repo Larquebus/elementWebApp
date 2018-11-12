@@ -330,8 +330,10 @@
 		color: [0, 0, 0, 1]
 	BoxLayout:
 		id: support_tray
-		size_hint_y: .15
-		orientation: 'horizontal'		
+		size_hint_y: .2
+		orientation: 'horizontal'
+	FloatLayout:
+		size_hint_y: .05
 		
 		
 <Objective>:
@@ -343,6 +345,7 @@
 		size_hint_x: .1
 		CheckBox:
 			active: root.complete_ind
+			on_active: root.complete_ind = self.active
 	TextInput:
 		id: objective_text
 		on_text: root.root_link.updateElementDetails(['objectives', root.obj_id, 'obj_text'], self.text)
