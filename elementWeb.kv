@@ -224,10 +224,10 @@
 	pos: self.pos
 			
 <ElementNotes>:
-	on_text: self.root_link.updateElementDetails('notes', self.text)
+	on_text: self.root_link.updateElementDetails(['notes'], self.text)
 	
 <CauseInput>:
-	on_text: self.root_link.updateElementDetails('cause', self.text)
+	on_text: self.root_link.updateElementDetails(['cause'], self.text)
 	
 <TypeSpecificContent>:
 	size: self.size
@@ -279,6 +279,72 @@
 		text: 'L'
 		size_hint: .3, 1
 		on_press: self.parent.setStat(self.parent.stat_group, 2)
+		
+<Agenda>:
+	button_bar: button_bar
+	ambition_input: ambition_input
+	opposition_input: opposition_input
+	objective_tray: objective_tray
+	support_tray: support_tray
+	orientation: 'vertical'
+	Label:
+		text: 'Player Agenda'
+		font_size: 16
+		size_hint_y: .2
+		color: [0, 0, 0, 1]	
+	BoxLayout:
+		id: button_bar
+		orientation: 'horizontal'
+		size_hint_y: .3
+		Button:
+			id: clear_agenda
+			text: 'Clear Agenda'
+			on_press: root.clearAgenda()
+	Label:
+		text: 'Ambition'
+		size_hint_y: .15
+		color: [0, 0, 0, 1]
+	AgendaInput:
+		id: ambition_input
+		size_hint_y: .5
+		on_text: root.root_link.updateElementDetails(['agenda', 'ambition'], self.text)
+	Label:
+		text: 'Opposition'
+		size_hint_y: .15
+		color: [0, 0, 0, 1]
+	AgendaInput:
+		id: opposition_input
+		size_hint_y: .3
+		on_text: root.root_link.updateElementDetails(['agenda', 'opposition'], self.text)
+	Label:
+		text: 'Objectives'
+		size_hint_y: .15
+		color: [0, 0, 0, 1]
+	BoxLayout:
+		id: objective_tray
+		orientation: 'vertical'
+		size_hint_y: 1.1
+	Label:
+		text: 'Support'
+		size_hint_y: .15
+		color: [0, 0, 0, 1]
+	BoxLayout:
+		id: support_tray
+		orientation: 'vertical'		
+		
+		
+<Objective>:
+	objective_text: objective_text
+	orientation: 'horizontal'
+	AnchorLayout:
+		anchor_x: 'center'
+		anchor_y: 'center'
+		size_hint_x: .1
+		CheckBox:
+			active: root.complete_ind
+	TextInput:
+		id: objective_text
+		on_text: root.root_link.updateElementDetails(['objectives', root.obj_id, 'obj_text'], self.text)
 
 # Build the widget tree:	
 <AppFrame>:

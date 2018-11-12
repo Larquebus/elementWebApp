@@ -4,6 +4,7 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.label import Label
 from kivy.uix.button import Button
 from kivy.uix.togglebutton import ToggleButton
+from kivy.uix.checkbox import CheckBox
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.stacklayout import StackLayout
 from kivy.uix.gridlayout import GridLayout
@@ -18,6 +19,8 @@ from kivy.graphics import BorderImage
 from kivy.clock import Clock
 
 from elementWebData import *
+from functools import reduce
+import operator
 
 # The core of the application. When initialized it taps into the web data file:
 class AppFrame(Widget):
@@ -31,14 +34,17 @@ class AppFrame(Widget):
   search_res_display = ObjectProperty(None)
   
   # Updates values in the detail for the currently selected element, saves back to web:
-  def updateElementDetails(self, value_to_update, new_value, sub_value_to_update=None):
+  def updateElementDetails(self, value_to_update, new_value):
     selected_key = self.selected_element.element_key
-    if sub_value_to_update == None:
-      self.selected_element.element_dict[value_to_update] = new_value
-      self.web_data.elements[selected_key].element_dict[value_to_update] = new_value
-    else:
-      self.selected_element.element_dict[value_to_update][sub_value_to_update] = new_value
-      self.web_data.elements[selected_key].element_dict[value_to_update][sub_value_to_update] = new_value
+    web_update_string = "self.web_data.elements['" + selected_key + "'].element_dict"
+    el_update_string = "self.selected_element.element_dict"
+    for depth_key in value_to_update:
+      web_update_string = web_update_string + "['" + depth_key + "']"
+      el_update_string = el_update_string + "['" + depth_key + "']"
+    web_update_string = web_update_string + " = new_value"
+    el_update_string = el_update_string + " = new_value"
+    exec(web_update_string)
+    exec(el_update_string)
 	# I genuinely don't know if these next two lines are necessary because the program 
 	# seems to save changes made to elements/web_data that it shouldn't be saving???
 	# Frankly, I'm terrified.
@@ -706,18 +712,118 @@ class StatToggles(BoxLayout):
   
   def setStat(self, stat, stat_val):
     app = App.get_running_app()
-    app.root.updateElementDetails('stats', stat_val, stat)
+    app.root.updateElementDetails(['stats', stat], stat_val)
     app.root.element_details.type_content.addTypeContent(app.root.selected_element.type)
 	  
 class RankDropdown(DropDown):
   def onSelect(self, btn_to_change, selected_rank):
     app = App.get_running_app()
     setattr(btn_to_change, 'text', selected_rank)
-    app.root.updateElementDetails('rank', selected_rank)
+    app.root.updateElementDetails(['rank'], selected_rank)
 	
 class CauseInput(TextInput):
   root_link = ObjectProperty(None)
   
+class Agenda(BoxLayout):
+  root_link = ObjectProperty(None)
+  player_element = ObjectProperty(None)
+  button_bar = ObjectProperty(None)
+  agenda_scope = StringProperty()
+  ambition_input = ObjectProperty(None)
+  opposition_input = ObjectProperty(None)
+  objective_tray = ObjectProperty(None)
+  support_tray = ObjectProperty(None)
+  num_objectives = NumericProperty(0)
+  num_support = NumericProperty(0)
+  
+  def activateAgenda(self):
+    app = App.get_running_app()
+    self.ambition_input.text = self.player_element.agenda["ambition"]
+    self.opposition_input.text = self.player_element.agenda["opposition"]
+	
+    self.agenda_scope = self.player_element.agenda["scope"]
+    
+	# Add the scope dropdown:
+    dropdown = ScopeDropdown()
+      
+    # Populate dropdown with scopes from the web's meta_data:
+    for scope in app.root.web_data.meta_data["agenda_scopes"]:
+      btn = Button(text=scope, size_hint_y=None, height=25)	
+      btn.bind(on_release=lambda btn: dropdown.select(btn.text))
+      dropdown.add_widget(btn)
+	  
+    if self.agenda_scope == '':
+      displayed_scope = 'select scope'
+    else:
+      displayed_scope = self.agenda_scope	
+		
+    # Add the button that triggers the dropdown:
+    dropdown_btn = Button(text=displayed_scope, height=25)
+    dropdown_btn.bind(on_release=dropdown.open)
+    dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(dropdown_btn, x))
+	
+    self.button_bar.add_widget(dropdown_btn)
+    
+    if self.agenda_scope == '':
+      pass
+    elif self.player_element.objectives == {}:
+      self.createObjectives()
+    else:
+      self.loadObjectives()
+	
+  def createObjectives(self):
+    app = App.get_running_app()
+    self.num_objectives = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["objectives"]
+    objective_dict = {}
+    for i in range(1, self.num_objectives + 1):
+      obj_id = "obj_" + str(i)
+      objective_dict[obj_id] = {"completed?": 0, "obj_text": ''}
+      objective = Objective(root_link=app.root,
+                            obj_id=obj_id,
+                            objective_text=objective_dict[obj_id]["obj_text"])
+      self.objective_tray.add_widget(objective)
+    app.root.updateElementDetails(['objectives'], objective_dict)
+
+  def loadObjectives(self):
+    app = App.get_running_app()
+    self.num_objectives = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["objectives"]
+    for i in range(1, self.num_objectives + 1):
+      obj_id = "obj_" + str(i)
+      obj_data = self.player_element.objectives[obj_id]
+      if obj_data["completed?"] == 1:
+        complete_boolean = True
+      else:
+        complete_boolean = False
+      objective = Objective(root_link=app.root,
+                            obj_id=obj_id,	  
+                            complete_ind=complete_boolean)
+      objective.objective_text.text = obj_data["obj_text"]
+      self.objective_tray.add_widget(objective)
+	
+  def createSupport(self):
+    pass
+
+  def loadSupport(self):
+    pass
+
+  def clearAgenda(self):
+    pass
+  
+class AgendaInput(TextInput):
+  pass
+  
+class Objective(BoxLayout):
+  root_link = ObjectProperty(None)
+  obj_id = StringProperty()
+  complete_ind = BooleanProperty(False)
+  objective_text = ObjectProperty(None)
+  
+class ScopeDropdown(DropDown):
+  def onSelect(self, btn_to_change, selected_scope):
+    app = App.get_running_app()
+    setattr(btn_to_change, 'text', selected_scope)
+    app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
+
 class TypeSpecificContent(BoxLayout):
   
   def addTypeContent(self, type):
@@ -876,7 +982,12 @@ class TypeSpecificContent(BoxLayout):
 	  
       # Add the archetype textinput:
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
-      self.add_widget(arch_input)	  
+      self.add_widget(arch_input)
+
+    elif type == 'Player':
+      agenda = Agenda(root_link=app.root, player_element=app.root.selected_element)
+      agenda.activateAgenda()
+      self.add_widget(agenda)
   
 """
 Build the app:
