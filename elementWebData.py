@@ -61,13 +61,27 @@ class elementData:
         self.element_dict["enemies"] = []
         self.enemies = self.element_dict["enemies"]
 
-    # For Player elements, set up agenda attribute:
+    # For Player elements, set up agenda, objectives, and support attribute:
     if self.type == 'Player':
       try:
         self.agenda = self.element_dict["agenda"]
       except KeyError:
-        self.element_dict["agenda"] = {"ambition": '', "opposition": '', "objectives": []}
+        self.element_dict["agenda"] = {"ambition": '', 
+                                       "opposition": '', 
+									   "scope": ''}
         self.agenda = self.element_dict["agenda"]
+		
+      try:
+        self.objectives = self.element_dict["objectives"]
+      except KeyError:
+        self.element_dict["objectives"] = {}
+        self.objectives = self.element_dict["objectives"]	
+
+      try:
+        self.support = self.element_dict["support"]
+      except KeyError:
+        self.element_dict["support"] = []
+        self.support = self.element_dict["support"]	
 		
   def resynchronize(self):
     self.type = self.element_dict["type"]
