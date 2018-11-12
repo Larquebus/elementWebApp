@@ -215,6 +215,7 @@ class SearchOverlay(FloatLayout):
     else:
       self.input_obj.text = ''
       app.root.remove_widget(self)
+	  return True
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
@@ -826,15 +827,11 @@ class Agenda(BoxLayout):
                         supp_id=supp_id
                         )
       self.support_tray.add_widget(support)
-
-  def clearAgenda(self):
+	  
+  def clearConfirm(self):
     app = App.get_running_app()
-    app.root.updateElementDetails(['agenda', 'ambition'], '')
-    app.root.updateElementDetails(['agenda', 'opposition'], '')
-    app.root.updateElementDetails(['agenda', 'scope'], '')
-    app.root.updateElementDetails(['objectives'], {})
-    app.root.updateElementDetails(['support'], {})
-    app.root.element_details.activateElementDetails()
+    conf_screen = ClearConfirmation(root_link=app.root)
+    app.root.add_widget(conf_screen)
   
 class AgendaInput(TextInput):
   pass
@@ -862,6 +859,28 @@ class ScopeDropdown(DropDown):
     setattr(btn_to_change, 'text', selected_scope)
     app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
     app.root.element_details.activateElementDetails()
+	
+class ClearConfirmation(AnchorLayout):
+  root_link = ObjectProperty(None)
+  confirmation_box = ObjectProperty(None)
+	
+  def clearAgenda(self):
+    self.root_link.updateElementDetails(['agenda', 'ambition'], '')
+    self.root_link.updateElementDetails(['agenda', 'opposition'], '')
+    self.root_link.updateElementDetails(['agenda', 'scope'], '')
+    self.root_link.updateElementDetails(['objectives'], {})
+    self.root_link.updateElementDetails(['support'], {})
+    self.root_link.element_details.activateElementDetails()
+    self.root_link.remove_widget(self)
+	
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (self.confirmation_box.collide_point(*touch.pos)):
+      super(AnchorLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
+      return True
+    else:
+      self.root_link.remove_widget(self)	
+      return True
 
 class TypeSpecificContent(BoxLayout):
   
