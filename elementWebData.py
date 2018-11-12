@@ -80,7 +80,7 @@ class elementData:
       try:
         self.support = self.element_dict["support"]
       except KeyError:
-        self.element_dict["support"] = []
+        self.element_dict["support"] = {}
         self.support = self.element_dict["support"]	
 		
   def resynchronize(self):

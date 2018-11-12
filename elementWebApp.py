@@ -766,10 +766,15 @@ class Agenda(BoxLayout):
     
     if self.agenda_scope == '':
       pass
-    elif self.player_element.objectives == {}:
-      self.createObjectives()
-    else:
-      self.loadObjectives()
+    else: 
+      if self.player_element.objectives == {}:
+        self.createObjectives()
+      else:
+        self.loadObjectives()
+      if self.player_element.support == {}:
+        self.createSupport()
+      else:
+        self.loadSupport()
 	
   def createObjectives(self):
     app = App.get_running_app()
@@ -801,10 +806,24 @@ class Agenda(BoxLayout):
       self.objective_tray.add_widget(objective)
 	
   def createSupport(self):
-    pass
+    app = App.get_running_app()
+    self.num_support = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["support"]
+    supp_dict = {}
+    for i in range(1, self.num_support + 1):
+      supp_id = "supp_" + str(i)
+      supp_dict[supp_id] = ''
+      support = TextInput(text=supp_dict[supp_id])
+      self.support_tray.add_widget(support)
+    app.root.updateElementDetails(['support'], supp_dict) 
 
   def loadSupport(self):
-    pass
+    app = App.get_running_app()
+    self.num_support = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["support"]
+    for i in range(1, self.num_support + 1):
+      supp_id = "supp_" + str(i)
+      supp_data = self.player_element.support[supp_id]
+      support = TextInput(text=supp_data)
+      self.support_tray.add_widget(support)
 
   def clearAgenda(self):
     pass
