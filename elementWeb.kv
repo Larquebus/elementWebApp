@@ -347,6 +347,9 @@
 		id: objective_text
 		on_text: root.root_link.updateElementDetails(['objectives', root.obj_id, 'obj_text'], self.text)
 
+<Support>:
+	on_text: self.root_link.updateElementDetails(['support', self.supp_id], self.text)
+		
 # Build the widget tree:	
 <AppFrame>:
 	id: app_
