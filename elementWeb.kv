@@ -393,7 +393,32 @@
 				text: 'Cancel'
 				on_press: root.root_link.remove_widget(root)
 				
-		
+<Promises>:
+	orientation: 'vertical'
+	size_hint_y: .5
+	Label:
+		text: 'Promises'
+		color: [0, 0, 0, 1]
+		size_hint_y: .15
+	
+<PromiseHolder>:
+	promise_input: promise_input
+	promised_to_input: promised_to_input
+	orientation: 'horizontal'
+	size_hint_y: .2
+	TextInput:
+		id: promise_input
+		on_text: root.root_link.updateElementDetails(['promises', root.promise_key, 'promise'], self.text)
+		size_hint_x: .7
+	TextInput:
+		id: promised_to_input
+		on_text: root.root_link.updateElementDetails(['promises', root.promise_key, 'promised_to'], self.text)
+		size_hint_x: .3
+	Button:
+		text: 'Clear'
+		size_hint_x: .1
+		on_press: root.clearPromise()
+
 # Build the widget tree:	
 <AppFrame>:
 	id: app_
@@ -455,6 +480,7 @@
 					color: [0, 0, 0, 1]
 			ElementNotesFrame:
 				id: notes_container
+				size_hint_y: .5
 			TypeSpecificContent:
 				id: type_content
 				orientation: 'vertical'

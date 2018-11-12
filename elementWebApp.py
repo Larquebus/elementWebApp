@@ -215,7 +215,7 @@ class SearchOverlay(FloatLayout):
     else:
       self.input_obj.text = ''
       app.root.remove_widget(self)
-	  return True
+      return True
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
@@ -882,6 +882,28 @@ class ClearConfirmation(AnchorLayout):
       self.root_link.remove_widget(self)	
       return True
 
+class Promises(BoxLayout):
+  promise_data = DictProperty(None)
+  
+  def activatePromises(self):
+    app = App.get_running_app()
+    for i in range(1, 6):
+      prom_key = 'prom_' + str(i)
+      promise_holder = PromiseHolder(root_link=app.root, promise_key=prom_key)
+      promise_holder.promise_input.text = self.promise_data[prom_key]["promise"]
+      promise_holder.promised_to_input.text = self.promise_data[prom_key]["promised_to"]
+      self.add_widget(promise_holder)
+  
+class PromiseHolder(BoxLayout):
+  root_link = ObjectProperty(None)
+  promise_key = StringProperty()
+  promise_input = ObjectProperty(None)
+  promised_to_input = ObjectProperty(None)
+  
+  def clearPromise(self):
+    self.promise_input.text = ''
+    self.promised_to_input.text = ''
+
 class TypeSpecificContent(BoxLayout):
   
   def addTypeContent(self, type):
@@ -1043,6 +1065,10 @@ class TypeSpecificContent(BoxLayout):
       self.add_widget(arch_input)
 
     elif type == 'Player':
+      promise_layout = Promises()
+      promise_layout.promise_data = app.root.selected_element.promises
+      promise_layout.activatePromises()
+      self.add_widget(promise_layout)
       agenda = Agenda(root_link=app.root, player_element=app.root.selected_element)
       agenda.activateAgenda()
       self.add_widget(agenda)
