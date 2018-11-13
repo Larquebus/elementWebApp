@@ -114,6 +114,7 @@ class webData:
     self.id_list = []
     self.elements = {}
     self.next_id = -1
+    self.id_history = []
     self.type_colors = {}
     self.type_colors_kivy = {}
     # Add a try/catch here to account for corrupted save files?
@@ -123,6 +124,7 @@ class webData:
         # The first line of the save file should contain meta data needed to set up the web UI.
         if i == 0:
           self.meta_data = json.loads(line)
+          self.id_history = self.meta_data["id_history"]
         # The remaining lines should contain data for each element in the web.
         else:
           temp_dict = json.loads(line)

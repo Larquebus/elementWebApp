@@ -139,6 +139,17 @@ class AppFrame(Widget):
     
     self.element_display.display_window.activateDisplay('web')
 	
+  def on_focus_element(self, *args):
+    try:
+      self.web_data.id_history.index(self.focus_element.id)
+    except ValueError:
+      self.web_data.id_history.insert(0, self.focus_element.id)
+      self.web_data.save()
+    else:
+      self.web_data.id_history.remove(self.focus_element.id)
+      self.web_data.id_history.insert(0, self.focus_element.id)
+      self.web_data.save()
+	
 class SearchBar(TextInput):
   filter = StringProperty(None)
   selected_result = NumericProperty(None)
@@ -1079,12 +1090,10 @@ Build the app:
 class elementWebApp(App):
   def build(self):
     app = AppFrame()
-    app.focus_element = app.web_data.elements["e" + str(app.web_data.meta_data["last_id"])]
-    #app.element_display.display_window.activateDisplay('web')
+    initial_id = app.web_data.id_history[0]
+    initial_key = "e" + str(initial_id)
+    app.focus_element = app.web_data.elements[initial_key]
     Window.maximize()
-#    app.focus_name = app_data.web_data.elements["e" + str(app_data.web_data.meta_data["last_id"])].name
-    print(app.web_data.meta_data)
-#    print(app_data.focus_name)
 	
     return app
 
