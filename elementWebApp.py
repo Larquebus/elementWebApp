@@ -27,7 +27,7 @@ class AppFrame(Widget):
   web_data = ObjectProperty(webData())
   selected_element = ObjectProperty(None)
   focus_element = ObjectProperty(None)
-  element_display = ObjectProperty(None)
+  display_window = ObjectProperty(None)
   static_search_bar = ObjectProperty(None)
   element_details = ObjectProperty(None)
   app_float = ObjectProperty(None)
@@ -137,8 +137,35 @@ class AppFrame(Widget):
     else:
       reciprocate_element.resynchronize()
     
-    self.element_display.display_window.activateDisplay('web')
+    self.activateDisplay('web')
 	
+  def activateDisplay(self, display_type):
+    self.display_window.clear_widgets() 
+    if display_type == 'flat':
+      
+      self.static_search_bar.parent_display_type = 'flat'
+      flat_web_scroll = ElementFlatScroll(size=self.display_window.size, 
+                                          pos=self.display_window.pos, 
+                                          do_scroll_x=False
+                                          )
+      self.display_window.flat_web = ElementFlat(root_link=self, 
+                                  elements=self.web_data.elements,
+                                  size=self.display_window.size,
+                                  pos=self.display_window.pos
+                                  )
+      self.display_window.flat_web.getFlatElements()
+      flat_web_scroll.add_widget(self.display_window.flat_web)
+      self.display_window.add_widget(flat_web_scroll)	
+    elif display_type == 'web':
+      self.static_search_bar.parent_display_type = 'web'	  
+      current_focus = self.focus_element
+      self.display_window.web_layout = ElementWeb(size=self.display_window.size, 
+                                   pos=self.display_window.pos, 
+                                   focus=current_focus,
+                                   root_link=self)
+      self.display_window.add_widget(self.display_window.web_layout)
+      self.display_window.web_layout.getElementWeb()
+	  
   def on_focus_element(self, *args):
     try:
       self.web_data.id_history.index(self.focus_element.id)
@@ -279,7 +306,7 @@ class SearchResultBtn(Button):
 	  # the focus and reset the static search bar's text:
       if (self.parent_linker_type == None and self.parent_display_type == 'web'):
         self.root_link.focus_element = self.element_data
-        self.root_link.element_display.display_window.activateDisplay('web')
+        self.root_link.activateDisplay('web')
         self.root_link.static_search_bar.text = ''
       # For searches called by a linker button, link the selected element to the focus:
       else:
@@ -287,7 +314,7 @@ class SearchResultBtn(Button):
                                           id_to_link=self.element_data.id
                                           )
       self.root_link.remove_widget(self.root_link.app_float)	
-      self.root_link.element_display.display_window.activateDisplay('web')
+      self.root_link.activateDisplay('web')
   
   def on_touch_down(self, touch):
     if self.collide_point(*touch.pos):
@@ -313,30 +340,6 @@ class ElementDisplayWindow(Widget):
   flat_web_scroll = ObjectProperty(None)
   web_layout = ObjectProperty(None)
   flat_web = ObjectProperty(None)
-  
-  def activateDisplay(self, display_type):
-    app = App.get_running_app()
-    self.clear_widgets()
-    if display_type == 'flat':
-      app.root.static_search_bar.parent_display_type = 'flat'
-      self.flat_web_scroll = ElementFlatScroll(size=self.size, pos=self.pos, do_scroll_x=False)
-      self.flat_web = ElementFlat(root_link=app.root, 
-                                  elements=app.root.web_data.elements,
-                                  size=self.flat_web_scroll.size,
-                                  pos=self.flat_web_scroll.pos
-                                  )
-      self.flat_web.getFlatElements()
-      self.flat_web_scroll.add_widget(self.flat_web)
-      self.add_widget(self.flat_web_scroll)	
-    elif display_type == 'web':
-      app.root.static_search_bar.parent_display_type = 'web'	  
-      current_focus = app.root.focus_element
-      self.web_layout = ElementWeb(size=self.size, 
-                                   pos=self.pos, 
-                                   focus=current_focus,
-                                   root_link=app.root)
-      self.add_widget(self.web_layout)
-      self.web_layout.getElementWeb()
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
@@ -577,7 +580,7 @@ class Element(Button):
   def on_touch_down(self, touch):
     if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
       self.root_link.focus_element = self.element_data
-      self.root_link.element_display.display_window.activateDisplay('web')
+      self.root_link.activateDisplay('web')
     elif self.collide_point(touch.pos[0], touch.pos[1]):
       self.root_link.selected_element = self.element_data
       self.selectElement()
@@ -609,7 +612,7 @@ class NewElement(BoxLayout):
                                   id_to_link=new_element_id
                                   )
       app.root.remove_widget(app.root.app_float)	
-    app.root.element_display.display_window.activateDisplay(self.parent_display_type)
+    app.root.activateDisplay(self.parent_display_type)
     if self.parent_display_type =='flat':
       self.clear_widgets()
 	
@@ -1094,9 +1097,7 @@ class elementWebApp(App):
     initial_key = "e" + str(initial_id)
     app.focus_element = app.web_data.elements[initial_key]
     Window.maximize()
-	
     return app
-
 
 if __name__ == '__main__':
   elementWebApp().run()

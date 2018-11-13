@@ -426,7 +426,7 @@
 	pos: root.pos
 	web: self.web_data
 	element_details: element_details
-	element_display: display
+	display_window: display_window
 	static_search_bar: static_search_bar
 	
 	BoxLayout:
@@ -436,7 +436,6 @@
 		ElementDisplay:
 			id: display
 			size_hint: 1.3, 1
-			display_window: display_window
 			ElementDisplayBar:
 				id: display_bar
 				size_hint_y: .03
@@ -445,13 +444,13 @@
 					size: self.size
 					pos: self.pos
 					text: 'Display Web'
-					on_press: self.parent.parent.display_window.activateDisplay('web')
+					on_press: root.activateDisplay('web')
 				Button:
 					id: display_all_button
 					size: self.size
 					pos: self.pos
 					text: 'Display All Elements'
-					on_press: self.parent.parent.display_window.activateDisplay('flat')
+					on_press: root.activateDisplay('flat')
 			ElementDisplayWindow:
 				id: display_window
 			SearchBar:
