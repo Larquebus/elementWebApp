@@ -280,26 +280,31 @@ class SearchResultBtn(Button):
       self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
 	
   def selectSearchResult(self):
+    new_element_pos = [0, 0]
     # If the selected search result is a "Add new element..." search "result":
     if self.mode == 'new':
+      new_element = NewElement()
       # For searches called by linker buttons in the element web, create a NewElement
 	  # prompt to replace the search bar: 
       if self.parent_linker_type != None:
-        new_element = NewElement(pos=(self.root_link.search_res_display.pos[0],
-                                      self.root_link.search_res_display.pos[1] + 124
-                                      )
-                                 )
-        new_element.parent_display_type = self.parent_display_type
+        new_element_pos = [self.root_link.search_res_display.pos[0],
+                           self.root_link.search_res_display.pos[1] + 124]
+        new_element.pos = new_element_pos
 		# Tells the NewElement object to link the resulting new element to the focus:
         new_element.link_to_focus = True 
         new_element.parent_linker_type = self.parent_linker_type
-        new_element.nameNewElement()
-      # For searches called by the static search bar, 
+      # For searches called by the static search bar, create a NewElement prompt and 
+	  # place it roughly in the center of the display window, and instruct the NewElement
+	  # object to set the focus as the new element upon creation:
+      else: 
+        self.root_link.display_window.clear_widgets()
+        new_element_pos = self.root_link.display_window.center
+        new_element.center = new_element_pos
+      new_element.parent_display_type = self.parent_display_type		
+      new_element.nameNewElement()
       self.root_link.app_float.clear_widgets()
       self.root_link.app_float.input_obj = new_element
       self.root_link.app_float.add_widget(new_element)
-      
-      
     else:
       # If the selected search result was an element, behavior depends on what called the 
 	  #search:
@@ -612,7 +617,9 @@ class NewElement(BoxLayout):
       app.root.updateElementLinks(link_type_to_update=self.parent_linker_type, 
                                   id_to_link=new_element_id
                                   )
-      app.root.remove_widget(app.root.app_float)	
+    elif self.parent_display_type == 'web':
+      app.root.focus_element = app.root.web_data.elements["e" + str(new_element_id)]
+    app.root.remove_widget(app.root.app_float)	
     app.root.activateDisplay(self.parent_display_type)
     if self.parent_display_type =='flat':
       self.clear_widgets()
