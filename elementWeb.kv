@@ -219,6 +219,10 @@
 			size: self.size
 			pos: self.pos
 			
+<DetailNameInput>:
+	multiline: False
+	on_text: self.root_link.updateElementDetails(['name'], self.text)
+		
 <ElementNotesFrame>:
 	size: self.size
 	pos: self.pos
@@ -465,6 +469,7 @@
 			orientation: 'vertical'
 			root_link: root
 			detail_display_bar: detail_display_bar
+			dynamic_bar_content: dynamic_bar_content
 			notes_container: notes_container
 			type_content: type_content
 			ElementDisplayBar:
@@ -477,6 +482,10 @@
 					pos: 0, self.parent.center_y
 					text: 'Currently selected: '
 					color: [0, 0, 0, 1]
+				BoxLayout:
+					id: dynamic_bar_content
+					orientation: 'horizontal'
+					
 			ElementNotesFrame:
 				id: notes_container
 				size_hint_y: .5

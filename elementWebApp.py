@@ -75,7 +75,6 @@ class AppFrame(Widget):
       else:
         self.unLink(key, id_to_link)
 	
-    # First update element_to_update:
     try:
       element_to_update.element_dict[link_type_to_update].append(id_to_link)
     except KeyError:
@@ -297,7 +296,9 @@ class SearchResultBtn(Button):
         new_element.nameNewElement()
       # For searches called by the static search bar, 
       self.root_link.app_float.clear_widgets()
+      self.root_link.app_float.input_obj = new_element
       self.root_link.app_float.add_widget(new_element)
+      
       
     else:
       # If the selected search result was an element, behavior depends on what called the 
@@ -685,15 +686,28 @@ about elements selected in the Element Web window.
 class ElementDetails(BoxLayout):
   root_link = ObjectProperty(None)
   detail_display_bar = ObjectProperty(None)
+  dynamic_bar_content = ObjectProperty(None)
   notes_container = ObjectProperty(None)
   type_content = ObjectProperty(None)
   
   def activateElementDetails(self):
     selected_element = self.root_link.selected_element
+	
+    # Clear the dynamic display bar content and repopulate:
+    self.dynamic_bar_content.clear_widgets()
+    selected_element_name = DetailNameInput(root_link=self.root_link,
+                                            text=selected_element.name)
+    self.dynamic_bar_content.add_widget(selected_element_name)
+	
+	# Add notes:
     self.notes_container.activateElementNotes()
-    self.detail_display_bar.detail_display_label.text = 'Currently selected: ' + selected_element.name
+
+	# Add content based on selected element type:
     self.type_content.addTypeContent(selected_element.type)
 	
+class DetailNameInput(TextInput):
+  root_link = ObjectProperty(None)
+
 class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
   
