@@ -19,7 +19,7 @@ from kivy.graphics import BorderImage
 from kivy.clock import Clock
 
 from elementWebData import *
-from functools import reduce
+from functools import partial
 import operator
 
 # The core of the application. When initialized it taps into the web data file:
@@ -32,7 +32,7 @@ class AppFrame(Widget):
   element_details = ObjectProperty(None)
   app_float = ObjectProperty(None)
   search_res_display = ObjectProperty(None)
-  
+	
   # Updates values in the detail for the currently selected element, saves back to web:
   def updateElementDetails(self, value_to_update, new_value):
     selected_key = self.selected_element.element_key
@@ -180,7 +180,7 @@ class SearchBar(TextInput):
   filter = StringProperty(None)
   selected_result = NumericProperty(None)
   parent_display_type = StringProperty()
-  results_orientation = StringProperty(None)
+  results_orientation = StringProperty('below')
   results_view_link = ObjectProperty(None)
   results_tray_link = ObjectProperty(None)
   parent_linker_type = ObjectProperty(None)
@@ -216,8 +216,8 @@ class SearchBar(TextInput):
         for key in search_results:
           e_id = search_results[key]
           search_result_elements[e_id] = app.root.web_data.elements[e_id]
-        app.root.element_display.display_window.flat_web.elements = search_result_elements
-        app.root.element_display.display_window.flat_web.getFlatElements()
+        app.root.display_window.flat_web.elements = search_result_elements
+        app.root.display_window.flat_web.getFlatElements()
   
   def on_focus(self, *args):
     app = App.get_running_app()
@@ -232,8 +232,9 @@ class SearchBar(TextInput):
           app.root.app_float.input_obj = self
           app.root.add_widget(app.root.app_float)
         app.root.search_res_display = SearchResults(search_bar_width=self.width, 
-                                                    search_bar_pos=pos_for_results)
-      
+                                                    search_bar_pos=pos_for_results,
+                                                    results_orientation=self.results_orientation
+                                                    )      
         app.root.app_float.add_widget(app.root.search_res_display)
         app.root.app_float.results_obj = app.root.search_res_display	  
         self.results_view_link = app.root.search_res_display	  
@@ -256,12 +257,19 @@ class SearchOverlay(FloatLayout):
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
+  results_orientation = StringProperty()
+  search_results_height = NumericProperty(50)
   results_anchor = ObjectProperty(None)
   results_tray = ObjectProperty(None)
   search_bar_pos = ListProperty(None)
   search_bar_width = NumericProperty(None)
   
   def on_num_results(self, *args):
+    if self.num_results < 5 and self.results_orientation == 'above':
+      self.search_results_height = self.num_results * 25
+    else:
+      self.search_results_height = 125
+	# The results_anchor is enclosed in the ScrollView and thus can be as tall as needed:
     self.results_anchor.size = self.width, self.num_results * 25	  
 
 class SearchResultBtn(Button):
@@ -1112,6 +1120,7 @@ class TypeSpecificContent(BoxLayout):
 Build the app:
 """
 class elementWebApp(App):
+  
   def build(self):
     app = AppFrame()
     initial_id = app.web_data.id_history[0]
