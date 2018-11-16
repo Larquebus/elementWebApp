@@ -448,15 +448,17 @@
 					size: self.size
 					pos: self.pos
 					text: 'Display Web'
-					on_press: root.activateDisplay('web')
+					on_press: root.activateWebDisplay()
 				Button:
 					id: display_all_button
 					size: self.size
 					pos: self.pos
 					text: 'Display All Elements'
-					on_press: root.activateDisplay('flat')
+					on_press: root.activateFlatDisplay()
 			ElementDisplayWindow:
 				id: display_window
+				size: self.parent.size
+				pos: self.parent.pos
 			SearchBar:
 				id: static_search_bar
 				size_hint_y: .03
@@ -485,7 +487,6 @@
 				BoxLayout:
 					id: dynamic_bar_content
 					orientation: 'horizontal'
-					
 			ElementNotesFrame:
 				id: notes_container
 				size_hint_y: .5
