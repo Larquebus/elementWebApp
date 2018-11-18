@@ -31,7 +31,7 @@ class AppFrame(Widget):
   display_window = ObjectProperty(None)
   static_search_bar = ObjectProperty(None)
   element_details = ObjectProperty(None)
-  app_float = ObjectProperty(None)
+  app_overlay = ObjectProperty(None)
   search_res_display = ObjectProperty(None)
   recent_layout = ObjectProperty(None)
 	
@@ -182,7 +182,17 @@ class AppFrame(Widget):
                                                 root_link=self)
     self.display_window.add_widget(self.display_window.web_layout)
     self.display_window.web_layout.getElementWeb()
-	  
+
+  def activateNewElementPopUp(self, *args):
+    new_el_pop_up = NewElementPopUp()
+    self.app_overlay = AnchorLayout(anchor_x='center',
+                                    anchor_y='center',
+                                    size=self.display_window.size,
+                                    pos=self.display_window.pos
+                                    )
+    self.add_widget(self.app_overlay)
+    self.app_overlay.add_widget(new_el_pop_up)
+
   def on_focus_element(self, *args):
     try:
       self.web_data.id_history.index(self.focus_element.id)
@@ -247,15 +257,15 @@ class SearchBar(TextInput):
         else:
           pos_for_results = self.pos[0], self.pos[1] - 125
         if self.parent_linker_type == None:
-          app.root.app_float = SearchOverlay(size=app.root.size)
-          app.root.app_float.input_obj = self
-          app.root.add_widget(app.root.app_float)
+          app.root.app_overlay = SearchOverlay(size=app.root.size)
+          app.root.app_overlay.input_obj = self
+          app.root.add_widget(app.root.app_overlay)
         app.root.search_res_display = SearchResults(search_bar_width=self.width, 
                                                     search_bar_pos=pos_for_results,
                                                     results_orientation=self.results_orientation
                                                     )      
-        app.root.app_float.add_widget(app.root.search_res_display)
-        app.root.app_float.results_obj = app.root.search_res_display	  
+        app.root.app_overlay.add_widget(app.root.search_res_display)
+        app.root.app_overlay.results_obj = app.root.search_res_display	  
         self.results_view_link = app.root.search_res_display	  
         self.results_tray_link = app.root.search_res_display.results_tray  
 	  
@@ -310,14 +320,14 @@ class SearchResultBtn(Button):
     new_element_pos = [0, 0]
     # If the selected search result is a "Add new element..." search "result":
     if self.mode == 'new':
-      new_element = NewElement()
-      # For searches called by linker buttons in the element web, create a NewElement
+      new_element = NewElementPopUp()
+      # For searches called by linker buttons in the element web, create a NewElementPopUp
 	  # prompt to replace the search bar: 
       if self.parent_linker_type != None:
         new_element_pos = [self.root_link.search_res_display.pos[0],
                            self.root_link.search_res_display.pos[1] + 124]
         new_element.pos = new_element_pos
-		# Tells the NewElement object to link the resulting new element to the focus:
+		# Tells the NewElementPopUp object to link the resulting new element to the focus:
         new_element.link_to_focus = True 
         new_element.parent_linker_type = self.parent_linker_type
       # For searches called by the static search bar, create a NewElement prompt and 
@@ -328,10 +338,9 @@ class SearchResultBtn(Button):
         new_element_pos = self.root_link.display_window.center
         new_element.center = new_element_pos
       new_element.parent_display_type = self.parent_display_type		
-      new_element.nameNewElement()
-      self.root_link.app_float.clear_widgets()
-      self.root_link.app_float.input_obj = new_element
-      self.root_link.app_float.add_widget(new_element)
+      self.root_link.app_overlay.clear_widgets()
+      self.root_link.app_overlay.input_obj = new_element
+      self.root_link.app_overlay.add_widget(new_element)
     else:
       # If the selected search result was an element, behavior depends on what called the 
 	  #search:
@@ -346,7 +355,7 @@ class SearchResultBtn(Button):
         self.root_link.updateElementLinks(link_type_to_update=self.parent_linker_type, 
                                           id_to_link=self.element_data.id
                                           )
-      self.root_link.remove_widget(self.root_link.app_float)	
+      self.root_link.remove_widget(self.root_link.app_overlay)	
       self.root_link.activateWebDisplay()
   
   def on_touch_down(self, touch):
@@ -394,8 +403,14 @@ class ElementFlat(StackLayout):
                             )
       self.add_widget(new_element)
       counter += 1
-    add_element_button = NewElement(parent_display_type='flat')
-    self.add_widget(add_element_button)		
+    add_element_button = Button(text='Add new element...', 
+                                padding=[10, 10],
+                                size_hint=(None,None)
+                                )
+#    add_element_button.texture_update()
+#    add_element_button.size = add_element_button.texture_size
+#    add_element_button.bind(on_press=self.root_link.activateNewElementPopUp)
+#    self.add_widget(add_element_button)		
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
@@ -617,20 +632,51 @@ class Element(Button):
     elif self.collide_point(touch.pos[0], touch.pos[1]):
       self.root_link.selected_element = self.element_data
       self.selectElement()
-	  
-class NewElement(BoxLayout):
-  name_request = ObjectProperty(None)
-  type_request = ObjectProperty(None)
-  new_element_obj = ObjectProperty(None)
+
+class NewElementPopUp(BoxLayout):
   parent_display_type = StringProperty()
   link_to_focus = BooleanProperty(False)
-  parent_linker_type = StringProperty(None)
-  
-  def addNewElementToWeb(self, text, type):
+  parent_linker_type = StringProperty(None)    
+  type_dropdown_btn = ObjectProperty(None)
+  type_dropdown = ObjectProperty(None)
+  name_input = ObjectProperty(None)
+  validate_btn = ObjectProperty(None)
+  type_error_msg = ObjectProperty(None)
+
+  def __init__(self, **kwargs):
+    super(BoxLayout, self).__init__(**kwargs)
     app = App.get_running_app()
+    if self.parent_display_type == 'flat':
+      self.pos_hint = [None, None]
+    self.type_dropdown = DropDown()
 	
+    # Populate dropdown with types from the web's meta_data:
+    for type in app.root.web_data.meta_data["available_types"]:
+      btn = Button(text=type, size_hint_y=None, height=25, background_normal='', color=[0, 0, 0, 1])
+      color_array = app.root.web_data.type_colors_kivy[type] 
+      btn.background_color=color_array		
+      btn.bind(on_release=lambda btn: self.type_dropdown.select(btn.text))
+      self.type_dropdown.add_widget(btn)
+
+    self.type_dropdown_btn.bind(on_release=self.type_dropdown.open)
+    self.type_dropdown.bind(on_select=lambda instance, x: setattr(self.type_dropdown_btn, 'text', x))
+
+  def clearError(self, *args):
+    self.type_error_msg.text = ''
+
+  def validateNewElement(self):
+    if self.type_dropdown_btn.text == 'select type':
+      self.type_error_msg.text = 'Type is required.'
+      Clock.schedule_once(self.clearError, 2)
+    else:
+      self.addNewElementToWeb()
+
+  def addNewElementToWeb(self):
+    app = App.get_running_app()
+    name = self.name_input.text
+    type = self.type_dropdown_btn.text
     # Assemble new element data based on where the NewElement button sits in the tree:
-    new_element_dict = {"name": text, "notes": "", "type": type}
+    new_element_dict = {"name": name, "notes": "", "type": type}
     if new_element_dict["type"] == 'NPC':
       new_element_dict["rank"] = 'None'
       new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
@@ -639,51 +685,18 @@ class NewElement(BoxLayout):
       new_element_dict["cause"] = ""
     new_element_id = app.root.web_data.addElement(new_element_dict)
     app.root.web_data.save()
-    # If the NewElement object was created from a linker's search, we need to link it to the focus:
+    # If the NewElementPopUp object was created from a linker's search, we need to link it to the focus:
     if self.link_to_focus:
       app.root.updateElementLinks(link_type_to_update=self.parent_linker_type, 
                                   id_to_link=new_element_id
                                   )
     elif self.parent_display_type == 'web':
       app.root.focus_element = app.root.web_data.elements["e" + str(new_element_id)]
-    app.root.remove_widget(app.root.app_float)	
+    app.root.remove_widget(app.root.app_overlay)	
     if self.parent_display_type == 'web':
       app.root.activateWebDisplay()
     else: 
       app.root.activateFlatDisplay()	
-    if self.parent_display_type =='flat':
-      self.clear_widgets()
-	
-    # Add the new element object to the parent
-	
-  def nameNewElement(self):
-    app = App.get_running_app()
-    self.clear_widgets()
-    # For new elements in the flat element display, add a text input and type select dropdown:
-    # Add the text input:
-    self.name_request = NewElementInput(size_hint_y=1.1)
-    self.add_widget(self.name_request)
-    
-	# Add the dropdown:
-    dropdown = DropDown()
-      
-    # Populate dropdown with types from the web's meta_data:
-    for type in app.root.web_data.meta_data["available_types"]:
-      btn = Button(text=type, size_hint_y=None, height=25, background_normal='', color=[0, 0, 0, 1])
-      color_array = app.root.web_data.type_colors_kivy[type] 
-      btn.background_color=color_array		
-      btn.bind(on_release=lambda btn: dropdown.select(btn.text))
-      dropdown.add_widget(btn)
-		
-    # Add the button that triggers the dropdown:
-    self.dropdown_btn = Button(text='select type', height=25)
-    self.dropdown_btn.bind(on_release=dropdown.open)
-    dropdown.bind(on_select=lambda instance, x: setattr(self.dropdown_btn, 'text', x))
-	  
-    self.add_widget(self.dropdown_btn)
-	  
-class NewElementInput(TextInput):
-  pass
   
 class LinkElement(BoxLayout):
   search_input = ObjectProperty(None)
@@ -707,10 +720,10 @@ class LinkElement(BoxLayout):
     link_search_bar.parent_display_type='web'
     link_search_bar.parent_linker_type=self.linker_type
 	
-    app.root.app_float = SearchOverlay(size=app.root.size)
-    app.root.app_float.input_obj = link_search_bar
-    app.root.add_widget(app.root.app_float)	
-    app.root.app_float.add_widget(link_search_bar)
+    app.root.app_overlay = SearchOverlay(size=app.root.size)
+    app.root.app_overlay.input_obj = link_search_bar
+    app.root.add_widget(app.root.app_overlay)	
+    app.root.app_overlay.add_widget(link_search_bar)
   
 class LinkElementInput(TextInput):
   pass

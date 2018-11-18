@@ -177,20 +177,53 @@
 	color: [0, 0, 0, 1]
 	bold: True
 	
-<NewElement>:
-	size: 200, 50
-	pos: self.pos
-	size_hint: (None, None)
+<NewElementPopUp>:
+	name_input: name_input
+	type_dropdown_btn: type_dropdown_btn
+	validate_btn: validate_btn
+	type_error_msg: type_error_msg
 	orientation: 'vertical'
-	Button:
-		font_name: 'Arial'
-		font_size: 14
-		text: "Click to Add New Element"
-		on_press: self.parent.nameNewElement()
-	
-<NewElementInput>:
-	multiline: False
-	on_text_validate: self.parent.addNewElementToWeb(self.text, self.parent.dropdown_btn.text)
+	size: 250, 150
+	size_hint: None, None
+	padding: 5
+	spacing: 5
+	canvas.before:
+		Color: 
+			rgba: [0, 0, 0, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos	
+	canvas:
+		Color: 
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size[0] - 5, self.size[1] - 5
+			pos: self.pos[0] + 2.5, self.pos[1] + 2.5
+	Label:
+		text: 'Add New Element:'
+		color: [0, 0, 0, 1]
+		size_hint_y: .3
+	TextInput:
+		id: name_input
+		size_hint_y: .4
+		multiline: False
+	BoxLayout:
+		orientation: 'horizontal'
+		spacing: 5
+		padding: 5
+		size_hint_y: .6
+		Button:
+			id: type_dropdown_btn
+			text: 'select type'
+		Button:
+			id: validate_btn
+			text: 'Done'
+			on_press: root.validateNewElement()
+	Label:
+		id: type_error_msg
+		text: ''
+		color: [1, 0, 0, 1]
+		size_hint_y: .3
 	
 <LinkElement>:
 	size: 50, 50
