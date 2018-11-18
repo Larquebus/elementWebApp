@@ -432,6 +432,7 @@
 	element_details: element_details
 	display_window: display_window
 	static_search_bar: static_search_bar
+	recent_layout: recent_layout
 	
 	BoxLayout:
 		orientation: 'horizontal'
@@ -459,11 +460,30 @@
 				id: display_window
 				size: self.parent.size
 				pos: self.parent.pos
-			SearchBar:
-				id: static_search_bar
-				size_hint_y: .03
-				results_orientation: 'above'
-				parent_linker_type: None
+			BoxLayout:
+				orientation: 'horizontal'
+				size_hint_y: .04
+				SearchBar:
+					id: static_search_bar
+					size_hint_x: .4
+					results_orientation: 'above'
+					parent_linker_type: None
+				ScrollView:
+					do_scroll_y: False
+					scroll_x: 0
+					size: self.width, self.parent.height
+					size_hint: 1, 1
+					canvas:
+						Color:
+							rgba: [0, 0, 0, .1]
+						Rectangle:
+							size: self.parent.size
+							pos: self.parent.pos
+					BoxLayout:
+						id: recent_layout
+						size_hint: None, 1
+						padding: 2
+						spacing: 2
 		ElementDetails:
 			id: element_details
 			pos: self.pos

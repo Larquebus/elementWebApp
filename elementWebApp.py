@@ -33,6 +33,7 @@ class AppFrame(Widget):
   element_details = ObjectProperty(None)
   app_float = ObjectProperty(None)
   search_res_display = ObjectProperty(None)
+  recent_layout = ObjectProperty(None)
 	
   # Updates values in the detail for the currently selected element, saves back to web:
   def updateElementDetails(self, value_to_update, new_value):
@@ -137,8 +138,24 @@ class AppFrame(Widget):
     else:
       reciprocate_element.resynchronize()
     
-    self.activateDisplay('web')
+    self.activateWebDisplay()
 	
+  def loadRecentElements(self, *args):
+    self.recent_layout.clear_widgets()
+    recent_elements = self.web_data.id_history
+    history_len = len(recent_elements)
+    width_needed = 0
+    for id in recent_elements:
+      element_key = "e" + str(id)
+      element = Element(element_data=self.web_data.elements[element_key],
+                        root_link=self,
+                        details_link=self.element_details
+                        )
+      element.texture_update()
+      width_needed += element.texture_size[0]
+      self.recent_layout.add_widget(element)
+    self.recent_layout.width = width_needed
+
   def activateFlatDisplay(self, *args):
     self.display_window.clear_widgets() 
     self.static_search_bar.parent_display_type = 'flat'
@@ -176,6 +193,7 @@ class AppFrame(Widget):
       self.web_data.id_history.remove(self.focus_element.id)
       self.web_data.id_history.insert(0, self.focus_element.id)
       self.web_data.save()
+    self.loadRecentElements()
 	
 class SearchBar(TextInput):
   filter = StringProperty(None)
@@ -1134,7 +1152,8 @@ class elementWebApp(App):
     initial_key = "e" + str(initial_id)
     self.app.focus_element = self.app.web_data.elements[initial_key]
     # .75 is the earliest these can fire without firing before Window.maximize()...
-    Clock.schedule_once(self.app.activateWebDisplay, 0.75)
+    Clock.schedule_once(self.app.activateWebDisplay, 1)
+    Clock.schedule_once(self.app.loadRecentElements, 1)
     return self.app
 
 if __name__ == '__main__':
