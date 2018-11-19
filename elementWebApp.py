@@ -163,13 +163,13 @@ class AppFrame(Widget):
                                         pos=self.display_window.pos, 
                                         do_scroll_x=False
                                         )
-    self.display_window.flat_web = ElementFlat(root_link=self, 
-                                               elements=self.web_data.elements,
-                                               size=self.display_window.size,
-                                               pos=self.display_window.pos
-                                               )
-    self.display_window.flat_web.getFlatElements()
-    flat_web_scroll.add_widget(self.display_window.flat_web)
+    self.display_window.scroll_child = ElementFlat(root_link=self, 
+                                                   elements=self.web_data.elements,
+                                                   size=self.display_window.size,
+                                                   pos=self.display_window.pos
+                                                   )
+    self.display_window.scroll_child.getFlatElements()
+    flat_web_scroll.add_widget(self.display_window.scroll_child)
     self.display_window.add_widget(flat_web_scroll)	
 	  
   def activateWebDisplay(self, *args):
@@ -245,8 +245,8 @@ class SearchBar(TextInput):
         for key in search_results:
           e_id = search_results[key]
           search_result_elements[e_id] = app.root.web_data.elements[e_id]
-        app.root.display_window.flat_web.elements = search_result_elements
-        app.root.display_window.flat_web.getFlatElements()
+        app.root.display_window.scroll_child.elements = search_result_elements
+        app.root.display_window.scroll_child.getFlatElements()
   
   def on_focus(self, *args):
     app = App.get_running_app()
@@ -379,19 +379,19 @@ class ElementDisplayBar(BoxLayout):
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
-  flat_web_scroll = ObjectProperty(None)
+  scroll_layout = ObjectProperty(None)
   web_layout = ObjectProperty(None)
-  flat_web = ObjectProperty(None)
+  scroll_child = ObjectProperty(None)
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
-  flat_web = ObjectProperty(None)
+  scroll_child = ObjectProperty(None)
   
 class ElementFlat(StackLayout):
   root_link = ObjectProperty(None)
   elements = DictProperty(None)
   
-  # Loops through all Elements in the Web and adds them to the ScrollView:
+  # Loops through all Elements in the Web and adds them to the flat view:
   def getFlatElements(self):
     self.clear_widgets()
     counter = 0
@@ -410,7 +410,9 @@ class ElementFlat(StackLayout):
 #    add_element_button.texture_update()
 #    add_element_button.size = add_element_button.texture_size
 #    add_element_button.bind(on_press=self.root_link.activateNewElementPopUp)
-#    self.add_widget(add_element_button)		
+#    self.add_widget(add_element_button)
+
+  # Loops through all the banked Elements in the Web and adds them to the flat view:
   
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
