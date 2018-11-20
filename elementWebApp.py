@@ -163,8 +163,13 @@ class AppFrame(Widget):
                                         pos=self.display_window.pos, 
                                         do_scroll_x=False
                                         )
+    search_results = self.web_data.search('', filter='allow:all')
+    visible_elements = {}
+    for key in search_results:
+      e_id = search_results[key]
+      visible_elements[e_id] = self.web_data.elements[e_id]
     self.display_window.scroll_child = ElementFlat(root_link=self, 
-                                                   elements=self.web_data.elements,
+                                                   elements=visible_elements,
                                                    size=self.display_window.size,
                                                    pos=self.display_window.pos
                                                    )

@@ -102,7 +102,7 @@ class elementData:
       self.rank = self.element_dict["rank"] 
     if (self.type == 'Faction' or self.type == 'Party'): 
       self.cause = self.element_dict["cause"]
-	  
+    
 """
 The webData object essentially acts a database of elementData objects.
 """
@@ -136,6 +136,7 @@ class webData:
       id = i["id"]
       self.id_list.append(id)
       self.elements["e" + str(id)] = elementData(i)
+ 
 	  
     # Sets up the web's next_id upon initialization:
     for i in self.id_list:
@@ -163,10 +164,17 @@ class webData:
   # This method searches the names of elements and returns a dictionary with matches:
   def search(self, search_str, filter=None):
     results = {}
-    if search_str == '':
+    if search_str == '' and filter == 'allow:all':
+      pass
+    elif search_str == '':
       return results
     
     for element in self.elements:
+      if self.elements[element].type.lower() == 'bank':
+        if filter == 'type:bank':
+          results[self.elements[element].name] = element
+        else:
+          continue
       if search_str.lower()[0:6:] == 'type: ':
         check = re.search(search_str.lower()[6::], self.elements[element].type.lower())
       elif search_str.lower()[0:6:] == 'rank: ':
@@ -180,7 +188,7 @@ class webData:
       if filter == 'type:char':
         if (self.elements[element].type == 'NPC' or self.elements[element].type == 'Player'):
           filter_passed = True
-      elif (filter == None or filter == ''):
+      elif (filter == None or filter == '' or filter == 'allow:all'):
         filter_passed = True
       if (check and filter_passed):
         results[self.elements[element].name] = element
