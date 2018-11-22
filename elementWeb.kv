@@ -317,6 +317,25 @@
 		size_hint: .3, 1
 		on_press: self.parent.setStat(self.parent.stat_group, 2)
 		
+<BankTypeContent>:
+	orientation: 'vertical'
+	size_hint_y: .05
+	size: self.size
+	Label:
+		text: 'Activate as:'
+		color: [0, 0, 0, 1]
+		size_hint_y: .05
+	BoxLayout:
+		orientation: 'horizontal'
+		size_hint_y: .05
+		Button:
+			text: 'Agent'
+			on_press: root.activateBank('Agent')
+		Button:
+			text: 'NPC'
+			on_press: root.activateBank('NPC')
+	FloatLayout:
+		
 <Agenda>:
 	button_bar: button_bar
 	ambition_input: ambition_input
@@ -429,6 +448,40 @@
 			Button:
 				text: 'Cancel'
 				on_press: root.root_link.remove_widget(root)
+				
+<Confirmation>:
+	prompt: prompt
+	confirm_btn: confirm_btn
+	size: 200, 100
+	orientation: 'vertical'
+	size_hint: None, None
+	canvas.before:
+		Color: 
+			rgba: [0, 0, 0, 1]
+		Rectangle:
+			size: self.size
+			pos: self.pos
+	canvas:
+		Color:
+			rgba: [1, 1, 1, 1]
+		Rectangle:
+			size: self.size[0] - 5, self.size[1] - 5
+			pos: self.pos[0] + 2.5, self.pos[1] + 2.5
+	Label:
+		id: prompt
+		size_hint_y: .3
+		color: [0, 0, 0, 1]
+	BoxLayout:
+		orientation: 'horizontal'
+		size_hint_y: .6
+		padding: 10
+		spacing: 10
+		Button:
+			id: confirm_btn
+			text: 'OK'
+		Button:
+			text: 'Cancel'
+			on_press: root.root_link.remove_widget(root.root_link.app_overlay)				
 				
 <Promises>:
 	orientation: 'vertical'

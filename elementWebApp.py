@@ -106,6 +106,41 @@ class AppFrame(Widget):
 	# Frankly, I'm terrified.
     self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()  
+
+  # Banks an NPC:
+  def bankNPC(self, *args):
+    # Change type to bank:
+    self.selected_element.element_dict["type"] = 'Bank'
+    self.selected_element.type = 'Bank'
+	
+    # Remove all links (if any):
+    link_lists_to_loop = {"parents": self.selected_element.parents, 
+                          "children": self.selected_element.children
+                         }
+    try:
+      link_lists_to_loop["allies"] = self.selected_element.allies
+    except AttributeError:
+      pass
+    try:
+      link_lists_to_loop["enemies"] = self.selected_element.enemies
+    except AttributeError:
+      pass
+
+    for key, link_list in link_lists_to_loop.items():
+      for i in link_list:
+        self.unLink(key, i)
+
+    # Remove the NPC from the id_history, if needed:
+    try: 
+      self.web_data.id_history.remove(self.selected_element.id)
+    except ValueError:
+      pass
+
+    self.web_data.elements[self.selected_element.element_key].resynchronize()
+    self.web_data.save()
+    self.remove_widget(self.app_overlay)
+    self.element_details.activateElementDetails()
+    self.loadRecentElements()
 	
   # Removes a specified link type to a specified element from the focus element:
   def unLink(self, link_type_to_remove, id_to_remove):
@@ -851,7 +886,18 @@ class RankDropdown(DropDown):
     app = App.get_running_app()
     setattr(btn_to_change, 'text', selected_rank)
     app.root.updateElementDetails(['rank'], selected_rank)
+
+class BankTypeContent(BoxLayout):
+  
+  # Activates the banked element as an NPC or an Agent:
+  def activateBank(self, resulting_type):
+    app = App.get_running_app()
 	
+    app.root.updateElementDetails(['type'], resulting_type)
+    app.root.element_details.activateElementDetails()
+    app.root.focus_element = app.root.selected_element
+    app.root.activateWebDisplay()
+
 class CauseInput(TextInput):
   root_link = ObjectProperty(None)
   
@@ -1016,6 +1062,10 @@ class ClearConfirmation(AnchorLayout):
       self.root_link.remove_widget(self)	
       return True
 
+class Confirmation(BoxLayout):
+  root_link = ObjectProperty(None)
+  prompt = ObjectProperty(None)
+	  
 class Promises(BoxLayout):
   promise_data = DictProperty(None)
   
@@ -1043,6 +1093,10 @@ class TypeSpecificContent(BoxLayout):
   def addTypeContent(self, type):
     app = App.get_running_app()
     self.clear_widgets()
+	
+    if type == 'Bank':
+      bank_type_content = BankTypeContent()
+      self.add_widget(bank_type_content)
 	
 	# Add stat display for appropriate types:
     if (type == 'NPC' or type == 'Faction' or type == 'Party'):
@@ -1163,8 +1217,7 @@ class TypeSpecificContent(BoxLayout):
 	  
     elif type == 'NPC':
       # Add a label to indicate what is being displayed:
-      rank_label = Label(text="NPC's rank:", size_hint_y=0.1, color=[0, 0, 0, 1])
-      self.add_widget(rank_label)
+      rank_label = Label(text="NPC's rank:", color=[0, 0, 0, 1])
 
       # Get the NPC's current rank:
       sel_npc_rank = app.root.selected_element.rank
@@ -1184,11 +1237,19 @@ class TypeSpecificContent(BoxLayout):
       else:
         displayed_rank = sel_npc_rank
 
-      self.dropdown_btn = Button(text=displayed_rank, size_hint_y=0.1)
+      self.dropdown_btn = Button(text=displayed_rank)
       self.dropdown_btn.bind(on_release=dropdown.open)
       dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(self.dropdown_btn, x))
 	  
-      self.add_widget(self.dropdown_btn)
+      npc_buttons = BoxLayout(orientation='horizontal', size_hint_y=0.1, spacing=10)
+      npc_buttons.add_widget(rank_label)
+      npc_buttons.add_widget(self.dropdown_btn)
+	  
+      retire_btn = Button(text='Retire NPC')
+      retire_btn.bind(on_press=self.retireConfirm)
+      npc_buttons.add_widget(retire_btn)
+	  
+      self.add_widget(npc_buttons)
 	  
       # Add the archetype label to indicate what is being displayed:
       arch_label = Label(text="NPC's archetype:", size_hint_y=0.07, color=[0, 0, 0, 1])
@@ -1198,6 +1259,12 @@ class TypeSpecificContent(BoxLayout):
       arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
       self.add_widget(arch_input)
 
+    elif type == 'Agent':
+      retire_btn = Button(text='Retire NPC', height=30, size_hint_y=None)
+      retire_btn.bind(on_press=self.retireConfirm)
+      self.add_widget(retire_btn)
+      self.add_widget(FloatLayout())
+
     elif type == 'Player':
       promise_layout = Promises()
       promise_layout.promise_data = app.root.selected_element.promises
@@ -1206,6 +1273,20 @@ class TypeSpecificContent(BoxLayout):
       agenda = Agenda(root_link=app.root, player_element=app.root.selected_element)
       agenda.activateAgenda()
       self.add_widget(agenda)
+  
+  def retireConfirm(self, *args):
+    app = App.get_running_app()
+    retire_conf_pop_up = Confirmation(root_link=app.root)
+    retire_conf_pop_up.confirm_btn.bind(on_press=app.root.bankNPC)
+    retire_conf_pop_up.prompt.text = 'Retire NPC?'
+    app.root.app_overlay = AnchorOverlay(size=app.root.size,
+                                         anchor_x='center',
+                                         anchor_y='center',
+                                         pop_up_obj=retire_conf_pop_up
+                                         )
+    app.root.add_widget(app.root.app_overlay)
+    app.root.app_overlay.add_widget(retire_conf_pop_up)						 
+    
   
 """
 Build the app:

@@ -35,11 +35,22 @@ class elementData:
       self.children = self.element_dict["children"]
 	
     if self.type == 'NPC':
-      self.rank = self.element_dict["rank"]
+      try:
+        self.rank = self.element_dict["rank"]
+      except KeyError:
+        self.element_dict["rank"] = 'None'
+        self.rank = self.element_dict["rank"]
 	  
     # Only NPCs, Factions, and Parties have stats:
     if (self.type == 'NPC' or self.type == 'Faction' or self.type == 'Party'):
-      self.stats = self.element_dict["stats"]
+      try:
+        self.stats = self.element_dict["stats"]
+      except KeyError:
+        if self.type == 'NPC':
+          self.element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
+        else:
+          self.element_dict["stats"] = {"Clout": -1}
+        self.stats = self.element_dict["stats"]
 	
     # Only Factions and Parties have causes:
     if (self.type == 'Faction' or self.type == 'Party'):
@@ -93,15 +104,10 @@ class elementData:
                                          "prom_5": {"promise": '', "promised_to": ''}
                                          }
         self.promises = self.element_dict["promises"]
-		
+  
+  # Resets all attributes according to the rules in __init__. This allows types to be changed:
   def resynchronize(self):
-    self.type = self.element_dict["type"]
-    self.name = self.element_dict["name"]
-    self.notes = self.element_dict["notes"]
-    if self.type == 'NPC':
-      self.rank = self.element_dict["rank"] 
-    if (self.type == 'Faction' or self.type == 'Party'): 
-      self.cause = self.element_dict["cause"]
+    self.__init__(self.element_dict)
     
 """
 The webData object essentially acts a database of elementData objects.
