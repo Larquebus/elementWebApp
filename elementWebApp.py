@@ -20,8 +20,6 @@ from kivy.clock import Clock
 
 from elementWebData import *
 from functools import partial
-import operator
-import time
 
 # The core of the application. When initialized it taps into the web data file:
 class AppFrame(Widget):
@@ -170,13 +168,36 @@ class AppFrame(Widget):
       visible_elements[e_id] = self.web_data.elements[e_id]
     self.display_window.scroll_child = ElementFlat(root_link=self, 
                                                    elements=visible_elements,
+                                                   parent_display_type='flat',												   
                                                    size=self.display_window.size,
                                                    pos=self.display_window.pos
                                                    )
     self.display_window.scroll_child.getFlatElements()
     flat_web_scroll.add_widget(self.display_window.scroll_child)
     self.display_window.add_widget(flat_web_scroll)	
-	  
+	
+  def activateBankDisplay(self, *args):
+    self.display_window.clear_widgets()
+    self.static_search_bar.parent_display_type = 'bank'
+    flat_web_scroll = ElementFlatScroll(size=self.display_window.size, 
+                                        pos=self.display_window.pos, 
+                                        do_scroll_x=False
+                                        )    
+    search_results = self.web_data.search('', filter='allow:bank')
+    banked_elements = {}
+    for key in search_results:
+      e_id = search_results[key]
+      banked_elements[e_id] = self.web_data.elements[e_id]
+    self.display_window.scroll_child = ElementFlat(root_link=self, 
+                                                   elements=banked_elements,
+                                                   parent_display_type='bank',
+                                                   size=self.display_window.size,
+                                                   pos=self.display_window.pos
+                                                   )
+    self.display_window.scroll_child.getFlatElements()
+    flat_web_scroll.add_widget(self.display_window.scroll_child)
+    self.display_window.add_widget(flat_web_scroll)	
+	
   def activateWebDisplay(self, *args):
     self.display_window.clear_widgets()   
     self.static_search_bar.parent_display_type = 'web'	  
@@ -188,13 +209,15 @@ class AppFrame(Widget):
     self.display_window.add_widget(self.display_window.web_layout)
     self.display_window.web_layout.getElementWeb()
 
-  def activateNewElementPopUp(self, *args):
-    new_el_pop_up = NewElementPopUp()
-    self.app_overlay = AnchorLayout(anchor_x='center',
-                                    anchor_y='center',
-                                    size=self.display_window.size,
-                                    pos=self.display_window.pos
-                                    )
+  def activateNewElementPopUp(self, parent_display_type, *args):
+    new_el_pop_up = NewElementPopUp(parent_display_type=parent_display_type)
+    if parent_display_type == 'bank':
+      new_el_pop_up.type_dropdown_btn.disabled = True
+    self.app_overlay = AnchorOverlay(size=self.size,
+                                     anchor_x='center',
+                                     anchor_y='center',
+                                     pop_up_obj=new_el_pop_up
+                                     )
     self.add_widget(self.app_overlay)
     self.app_overlay.add_widget(new_el_pop_up)
 
@@ -273,7 +296,9 @@ class SearchBar(TextInput):
         app.root.app_overlay.results_obj = app.root.search_res_display	  
         self.results_view_link = app.root.search_res_display	  
         self.results_tray_link = app.root.search_res_display.results_tray  
-	  
+
+# This overlay is a float layout that takes two objects and allows touches to pass to them 
+# while interpreting touches to any other area of the layout as a command to terminate the overlay.
 class SearchOverlay(FloatLayout):
   input_obj = ObjectProperty(None)
   results_obj = ObjectProperty(None)
@@ -288,6 +313,20 @@ class SearchOverlay(FloatLayout):
       self.input_obj.text = ''
       app.root.remove_widget(self)
       return True
+	  
+# This overlay is an anchor layout that takes one object and allows touches to pass to it 
+# while interpreting touches to any other area of the layout as a command to terminate the overlay.
+class AnchorOverlay(AnchorLayout):
+  pop_up_obj = ObjectProperty(None)
+  
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (self.pop_up_obj.collide_point(*touch.pos)):
+      super(AnchorLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
+      return True
+    else:
+      app.root.remove_widget(self)
+      return True  
 	  
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
@@ -395,6 +434,7 @@ class ElementFlatScroll(ScrollView):
 class ElementFlat(StackLayout):
   root_link = ObjectProperty(None)
   elements = DictProperty(None)
+  parent_display_type = StringProperty()
   
   # Loops through all Elements in the Web and adds them to the flat view:
   def getFlatElements(self):
@@ -412,13 +452,11 @@ class ElementFlat(StackLayout):
                                 padding=[10, 10],
                                 size_hint=(None,None)
                                 )
-#    add_element_button.texture_update()
-#    add_element_button.size = add_element_button.texture_size
-#    add_element_button.bind(on_press=self.root_link.activateNewElementPopUp)
-#    self.add_widget(add_element_button)
+    add_element_button.texture_update()
+    add_element_button.size = add_element_button.texture_size
+    add_element_button.bind(on_press=partial(self.root_link.activateNewElementPopUp, self.parent_display_type))
+    self.add_widget(add_element_button)
 
-  # Loops through all the banked Elements in the Web and adds them to the flat view:
-  
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
   root_link = ObjectProperty(None)  
@@ -626,7 +664,10 @@ class Element(Button):
   def __init__(self, **kwargs):
     super(Button, self).__init__(**kwargs)
     self.element_name = self.element_data.name
-    self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+    if self.element_data.type == 'Bank':
+      self.type_color = [0, 0, 0, .25]
+    else:
+      self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
   
   def selectElement(self):
     self.root_link.selected_element = self.element_data
@@ -634,8 +675,11 @@ class Element(Button):
 	
   def on_touch_down(self, touch):
     if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
-      self.root_link.focus_element = self.element_data
-      self.root_link.activateWebDisplay()
+      if self.element_data.type == 'Bank':
+        pass
+      else:
+        self.root_link.focus_element = self.element_data
+        self.root_link.activateWebDisplay()
     elif self.collide_point(touch.pos[0], touch.pos[1]):
       self.root_link.selected_element = self.element_data
       self.selectElement()
@@ -653,7 +697,7 @@ class NewElementPopUp(BoxLayout):
   def __init__(self, **kwargs):
     super(BoxLayout, self).__init__(**kwargs)
     app = App.get_running_app()
-    if self.parent_display_type == 'flat':
+    if (self.parent_display_type == 'flat' or self.parent_display_type == 'bank'):
       self.pos_hint = [None, None]
     self.type_dropdown = DropDown()
 	
@@ -672,7 +716,7 @@ class NewElementPopUp(BoxLayout):
     self.type_error_msg.text = ''
 
   def validateNewElement(self):
-    if self.type_dropdown_btn.text == 'select type':
+    if self.type_dropdown_btn.text == 'select type' and not self.type_dropdown_btn.disabled:
       self.type_error_msg.text = 'Type is required.'
       Clock.schedule_once(self.clearError, 2)
     else:
@@ -681,7 +725,10 @@ class NewElementPopUp(BoxLayout):
   def addNewElementToWeb(self):
     app = App.get_running_app()
     name = self.name_input.text
-    type = self.type_dropdown_btn.text
+    if self.parent_display_type == 'bank':
+      type = 'Bank'
+    else:
+      type = self.type_dropdown_btn.text
     # Assemble new element data based on where the NewElement button sits in the tree:
     new_element_dict = {"name": name, "notes": "", "type": type}
     if new_element_dict["type"] == 'NPC':
@@ -702,8 +749,10 @@ class NewElementPopUp(BoxLayout):
     app.root.remove_widget(app.root.app_overlay)	
     if self.parent_display_type == 'web':
       app.root.activateWebDisplay()
-    else: 
-      app.root.activateFlatDisplay()	
+    elif self.parent_display_type == 'flat': 
+      app.root.activateFlatDisplay()
+    else:
+      app.root.activateBankDisplay()
   
 class LinkElement(BoxLayout):
   search_input = ObjectProperty(None)

@@ -489,6 +489,12 @@
 					pos: self.pos
 					text: 'Display All Elements'
 					on_press: root.activateFlatDisplay()
+				Button:
+					id: display_banked_button
+					size: self.size
+					pos: self.pos
+					text: 'Display Banked Elements'
+					on_press: root.activateBankDisplay()
 			ElementDisplayWindow:
 				id: display_window
 				size: self.parent.size

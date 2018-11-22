@@ -164,14 +164,14 @@ class webData:
   # This method searches the names of elements and returns a dictionary with matches:
   def search(self, search_str, filter=None):
     results = {}
-    if search_str == '' and filter == 'allow:all':
+    if search_str == '' and (filter == 'allow:all' or filter == 'allow:bank'):
       pass
     elif search_str == '':
       return results
     
     for element in self.elements:
       if self.elements[element].type.lower() == 'bank':
-        if filter == 'type:bank':
+        if filter == 'allow:bank':
           results[self.elements[element].name] = element
         else:
           continue
