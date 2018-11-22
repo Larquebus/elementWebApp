@@ -105,7 +105,17 @@ class AppFrame(Widget):
 	# seems to save changes made to elements/web_data that it shouldn't be saving???
 	# Frankly, I'm terrified.
     self.web_data.elements[element_to_update.element_key].resynchronize()
-    self.web_data.save()  
+    self.web_data.save()
+
+  # Clears the selected player's Agenda:
+  def clearAgenda(self, *args):
+    self.updateElementDetails(['agenda', 'ambition'], '')
+    self.updateElementDetails(['agenda', 'opposition'], '')
+    self.updateElementDetails(['agenda', 'scope'], '')
+    self.updateElementDetails(['objectives'], {})
+    self.updateElementDetails(['support'], {})
+    self.element_details.activateElementDetails()
+    self.remove_widget(self.app_overlay)
 
   # Banks an NPC:
   def bankNPC(self, *args):
@@ -249,8 +259,6 @@ class AppFrame(Widget):
     if parent_display_type == 'bank':
       new_el_pop_up.type_dropdown_btn.disabled = True
     self.app_overlay = AnchorOverlay(size=self.size,
-                                     anchor_x='center',
-                                     anchor_y='center',
                                      pop_up_obj=new_el_pop_up
                                      )
     self.add_widget(self.app_overlay)
@@ -1010,8 +1018,14 @@ class Agenda(BoxLayout):
 	  
   def clearConfirm(self):
     app = App.get_running_app()
-    conf_screen = ClearConfirmation(root_link=app.root)
-    app.root.add_widget(conf_screen)
+    clear_conf_pop_up = Confirmation(root_link=app.root)
+    clear_conf_pop_up.confirm_btn.bind(on_press=app.root.clearAgenda)
+    clear_conf_pop_up.prompt.text = 'Clear Agenda?'
+    app.root.app_overlay = AnchorOverlay(size=app.root.size,
+                                         pop_up_obj=clear_conf_pop_up
+                                         )
+    app.root.add_widget(app.root.app_overlay)
+    app.root.app_overlay.add_widget(clear_conf_pop_up)		
   
 class AgendaInput(TextInput):
   pass
@@ -1039,28 +1053,6 @@ class ScopeDropdown(DropDown):
     setattr(btn_to_change, 'text', selected_scope)
     app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
     app.root.element_details.activateElementDetails()
-	
-class ClearConfirmation(AnchorLayout):
-  root_link = ObjectProperty(None)
-  confirmation_box = ObjectProperty(None)
-	
-  def clearAgenda(self):
-    self.root_link.updateElementDetails(['agenda', 'ambition'], '')
-    self.root_link.updateElementDetails(['agenda', 'opposition'], '')
-    self.root_link.updateElementDetails(['agenda', 'scope'], '')
-    self.root_link.updateElementDetails(['objectives'], {})
-    self.root_link.updateElementDetails(['support'], {})
-    self.root_link.element_details.activateElementDetails()
-    self.root_link.remove_widget(self)
-	
-  def on_touch_down(self, touch):
-    app = App.get_running_app()
-    if (self.confirmation_box.collide_point(*touch.pos)):
-      super(AnchorLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
-      return True
-    else:
-      self.root_link.remove_widget(self)	
-      return True
 
 class Confirmation(BoxLayout):
   root_link = ObjectProperty(None)
@@ -1280,8 +1272,6 @@ class TypeSpecificContent(BoxLayout):
     retire_conf_pop_up.confirm_btn.bind(on_press=app.root.bankNPC)
     retire_conf_pop_up.prompt.text = 'Retire NPC?'
     app.root.app_overlay = AnchorOverlay(size=app.root.size,
-                                         anchor_x='center',
-                                         anchor_y='center',
                                          pop_up_obj=retire_conf_pop_up
                                          )
     app.root.add_widget(app.root.app_overlay)

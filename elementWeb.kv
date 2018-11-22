@@ -1,5 +1,10 @@
 #:kivy 1.10.1
 
+# These widgets are pop ups, and are added directly to the root when called:
+<AnchorOverlay>:
+	anchor_x: 'center'
+	anchor_y: 'center'
+
 # These widgets comprise the left hand side of the window, and involve displaying elements:
 <ElementDisplay>:
 	orientation: 'vertical'
@@ -409,45 +414,6 @@
 
 <Support>:
 	on_text: self.root_link.updateElementDetails(['support', self.supp_id], self.text)
-	
-<ClearConfirmation>
-	confirmation_box: confirmation_box
-	size: self.root_link.size
-	pos: self.root_link.pos
-	anchor_x: 'center'
-	anchor_y: 'center'
-	BoxLayout:
-		id: confirmation_box
-		size: 200, 100
-		orientation: 'vertical'
-		size_hint: None, None
-		canvas.before:
-			Color: 
-				rgba: [0, 0, 0, 1]
-			Rectangle:
-				size: self.size
-				pos: self.pos
-		canvas:
-			Color:
-				rgba: [1, 1, 1, 1]
-			Rectangle:
-				size: self.size[0] - 5, self.size[1] - 5
-				pos: self.pos[0] + 2.5, self.pos[1] + 2.5
-		Label:
-			text: 'Clear agenda?'
-			size_hint_y: .3
-			color: [0, 0, 0, 1]
-		BoxLayout:
-			orientation: 'horizontal'
-			size_hint_y: .6
-			padding: 10
-			spacing: 10
-			Button:
-				text: 'OK'
-				on_press: root.clearAgenda()
-			Button:
-				text: 'Cancel'
-				on_press: root.root_link.remove_widget(root)
 				
 <Confirmation>:
 	prompt: prompt
