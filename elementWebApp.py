@@ -21,7 +21,13 @@ from kivy.clock import Clock
 from elementWebData import *
 from functools import partial
 
-# The core of the application. When initialized it taps into the web data file:
+"""
+=======================================================================================================
+~~~ The AppFrame ~~~
+This is the core of the application. It allows interfacing the the web's data file and provides 
+numerous methods involved in editing and managing that data. 
+=======================================================================================================
+"""
 class AppFrame(Widget):
   web_data = ObjectProperty(webData())
   selected_element = ObjectProperty(None)
@@ -107,7 +113,7 @@ class AppFrame(Widget):
     self.web_data.elements[element_to_update.element_key].resynchronize()
     self.web_data.save()
 
-  # Clears the selected player's Agenda:
+  # Clears the selected player-type element's Agenda:
   def clearAgenda(self, *args):
     self.updateElementDetails(['agenda', 'ambition'], '')
     self.updateElementDetails(['agenda', 'opposition'], '')
@@ -117,7 +123,7 @@ class AppFrame(Widget):
     self.element_details.activateElementDetails()
     self.remove_widget(self.app_overlay)
 
-  # Banks an NPC:
+  # Changes the selected_element to a banked element and unLinks all its linked elements:
   def bankNPC(self, *args):
     # Change type to bank:
     self.selected_element.element_dict["type"] = 'Bank'
@@ -152,7 +158,7 @@ class AppFrame(Widget):
     self.element_details.activateElementDetails()
     self.loadRecentElements()
 	
-  # Removes a specified link type to a specified element from the focus element:
+  # Removes a specified link type to a specified element from the focus_element:
   def unLink(self, link_type_to_remove, id_to_remove):
     try:
       self.focus_element.element_dict[link_type_to_remove].remove(id_to_remove)
@@ -183,6 +189,7 @@ class AppFrame(Widget):
     
     self.activateWebDisplay()
 	
+  # Loads the log of previously focused elements:
   def loadRecentElements(self, *args):
     self.recent_layout.clear_widgets()
     recent_elements = self.web_data.id_history
@@ -199,6 +206,7 @@ class AppFrame(Widget):
       self.recent_layout.add_widget(element)
     self.recent_layout.width = width_needed
 
+  # Displays the flat view of non-banked Elements:
   def activateFlatDisplay(self, *args):
     self.display_window.clear_widgets() 
     self.static_search_bar.parent_display_type = 'flat'
@@ -220,7 +228,8 @@ class AppFrame(Widget):
     self.display_window.scroll_child.getFlatElements()
     flat_web_scroll.add_widget(self.display_window.scroll_child)
     self.display_window.add_widget(flat_web_scroll)	
-	
+
+  # Displays the flat view of banked Elements:
   def activateBankDisplay(self, *args):
     self.display_window.clear_widgets()
     self.static_search_bar.parent_display_type = 'bank'
@@ -242,7 +251,8 @@ class AppFrame(Widget):
     self.display_window.scroll_child.getFlatElements()
     flat_web_scroll.add_widget(self.display_window.scroll_child)
     self.display_window.add_widget(flat_web_scroll)	
-	
+
+  # Displays the web view of the focus_element:
   def activateWebDisplay(self, *args):
     self.display_window.clear_widgets()   
     self.static_search_bar.parent_display_type = 'web'	  
@@ -254,6 +264,8 @@ class AppFrame(Widget):
     self.display_window.add_widget(self.display_window.web_layout)
     self.display_window.web_layout.getElementWeb()
 
+  # Adds an AnchorOverlay and then a NewElementPopUp widget to that. For use when adding a 
+  # new Element from the flat and bank views:
   def activateNewElementPopUp(self, parent_display_type, *args):
     new_el_pop_up = NewElementPopUp(parent_display_type=parent_display_type)
     if parent_display_type == 'bank':
@@ -264,6 +276,7 @@ class AppFrame(Widget):
     self.add_widget(self.app_overlay)
     self.app_overlay.add_widget(new_el_pop_up)
 
+  # Manages the id_history whenever the focus_element changes:
   def on_focus_element(self, *args):
     try:
       self.web_data.id_history.index(self.focus_element.id)
@@ -276,6 +289,48 @@ class AppFrame(Widget):
       self.web_data.save()
     self.loadRecentElements()
 	
+"""
+=======================================================================================================
+~~~ Application Overlay Widgets ~~~
+These widgets are pop ups, and are added directly to the root when called. They can be called by
+any other part of the application, and some of them can be called from multiple different methods.
+=======================================================================================================
+"""	
+
+# This overlay is an anchor layout that takes one object and allows touches to pass to it 
+# while interpreting touches to any other area of the layout as a command to terminate the overlay.
+class AnchorOverlay(AnchorLayout):
+  pop_up_obj = ObjectProperty(None)
+  
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (self.pop_up_obj.collide_point(*touch.pos)):
+      super(AnchorLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
+      return True
+    else:
+      app.root.remove_widget(self)
+      return True  
+
+# This overlay is a float layout that takes two objects and allows touches to pass to them 
+# while interpreting touches to any other area of the layout as a command to terminate the overlay.
+# It is used solely by the search functionality.
+class SearchOverlay(FloatLayout):
+  input_obj = ObjectProperty(None)
+  results_obj = ObjectProperty(None)
+  
+  def on_touch_down(self, touch):
+    app = App.get_running_app()
+    if (self.input_obj.collide_point(*touch.pos) or
+        self.results_obj.collide_point(*touch.pos)):
+      super(FloatLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
+      return True
+    else:
+      self.input_obj.text = ''
+      app.root.remove_widget(self)
+      return True	  
+	  
+# This TextInput is called by the static structure of the application, and can also be called 
+# when linking elements.
 class SearchBar(TextInput):
   filter = StringProperty(None)
   selected_result = NumericProperty(None)
@@ -285,11 +340,12 @@ class SearchBar(TextInput):
   results_tray_link = ObjectProperty(None)
   parent_linker_type = ObjectProperty(None)
   
+  # Searches for Elements whose names match the provided search_str and displays the results.
   def dynamicSearch(self, search_str, filter):
     app = App.get_running_app()
     search_results = app.root.web_data.search(search_str, filter)
     if len(search_results) > 0:
-      
+      # Searches executed on the web view call a pop up that displays the results.
       if self.parent_display_type == 'web':
         self.results_tray_link.clear_widgets()
         self.results_view_link.num_results = len(search_results) + 1
@@ -311,6 +367,7 @@ class SearchBar(TextInput):
                                    )
           result.parent_linker_type=self.parent_linker_type
           self.results_tray_link.add_widget(result)
+      # Searches executed on the flat view simply edit the elements displayed in the flat view.
       elif self.parent_display_type == 'flat':
         search_result_elements = {}
         for key in search_results:
@@ -319,6 +376,8 @@ class SearchBar(TextInput):
         app.root.display_window.scroll_child.elements = search_result_elements
         app.root.display_window.scroll_child.getFlatElements()
   
+  # Once the user focuses the search bar, an invisible pop up is called into existence, which is 
+  # ready to display results once the user starts typing.
   def on_focus(self, *args):
     app = App.get_running_app()
     if self.focus == True:
@@ -339,38 +398,10 @@ class SearchBar(TextInput):
         app.root.app_overlay.results_obj = app.root.search_res_display	  
         self.results_view_link = app.root.search_res_display	  
         self.results_tray_link = app.root.search_res_display.results_tray  
-
-# This overlay is a float layout that takes two objects and allows touches to pass to them 
-# while interpreting touches to any other area of the layout as a command to terminate the overlay.
-class SearchOverlay(FloatLayout):
-  input_obj = ObjectProperty(None)
-  results_obj = ObjectProperty(None)
-  
-  def on_touch_down(self, touch):
-    app = App.get_running_app()
-    if (self.input_obj.collide_point(*touch.pos) or
-        self.results_obj.collide_point(*touch.pos)):
-      super(FloatLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
-      return True
-    else:
-      self.input_obj.text = ''
-      app.root.remove_widget(self)
-      return True
 	  
-# This overlay is an anchor layout that takes one object and allows touches to pass to it 
-# while interpreting touches to any other area of the layout as a command to terminate the overlay.
-class AnchorOverlay(AnchorLayout):
-  pop_up_obj = ObjectProperty(None)
-  
-  def on_touch_down(self, touch):
-    app = App.get_running_app()
-    if (self.pop_up_obj.collide_point(*touch.pos)):
-      super(AnchorLayout, self).on_touch_down(touch) # This lets the touch pass on to children.
-      return True
-    else:
-      app.root.remove_widget(self)
-      return True  
-	  
+# This ScrollView displays search results and dynamically resizes itself depending on the number
+# of results it needs to display. It also sets its position based on the search bar it was 
+# called from.
 class SearchResults(ScrollView):
   num_results = NumericProperty(0)
   results_orientation = StringProperty()
@@ -388,6 +419,8 @@ class SearchResults(ScrollView):
 	# The results_anchor is enclosed in the ScrollView and thus can be as tall as needed:
     self.results_anchor.size = self.width, self.num_results * 25	  
 
+# All displayed search results are Buttons that have different effects on_press depending on 
+# what kind of search they appeared in.
 class SearchResultBtn(Button):
   mode = StringProperty()
   element_data = ObjectProperty(None)
@@ -451,24 +484,140 @@ class SearchResultBtn(Button):
       touch.ungrab(self)
       super(Button, self).on_touch_down(touch) #This lets the touch act on the button.
       return True
+
+# This is a general confirmaton pop up.
+class Confirmation(BoxLayout):
+  root_link = ObjectProperty(None)
+  prompt = ObjectProperty(None)
+  
+# This specialized pop up collects the minimum required information when the user adds a new element.
+class NewElementPopUp(BoxLayout):
+  parent_display_type = StringProperty()
+  link_to_focus = BooleanProperty(False)
+  parent_linker_type = StringProperty(None)    
+  type_dropdown_btn = ObjectProperty(None)
+  type_dropdown = ObjectProperty(None)
+  name_input = ObjectProperty(None)
+  validate_btn = ObjectProperty(None)
+  type_error_msg = ObjectProperty(None)
+
+  # When initialized, it sets up the type_dropdown:
+  def __init__(self, **kwargs):
+    super(BoxLayout, self).__init__(**kwargs)
+    app = App.get_running_app()
+    if (self.parent_display_type == 'flat' or self.parent_display_type == 'bank'):
+      self.pos_hint = [None, None]
+    self.type_dropdown = DropDown()
 	
+    # Populate dropdown with types from the web's meta_data:
+    for type in app.root.web_data.meta_data["available_types"]:
+      btn = Button(text=type, size_hint_y=None, height=25, background_normal='', color=[0, 0, 0, 1])
+      color_array = app.root.web_data.type_colors_kivy[type] 
+      btn.background_color=color_array		
+      btn.bind(on_release=lambda btn: self.type_dropdown.select(btn.text))
+      self.type_dropdown.add_widget(btn)
+
+    self.type_dropdown_btn.bind(on_release=self.type_dropdown.open)
+    self.type_dropdown.bind(on_select=lambda instance, x: setattr(self.type_dropdown_btn, 'text', x))
+
+  # Used to clear error messages after they've been briefly displayed.
+  def clearError(self, *args):
+    self.type_error_msg.text = ''
+
+  # Checks to make sure the user filled out all the required information and displays an error if 
+  # necessary.
+  def validateNewElement(self):
+    if self.type_dropdown_btn.text == 'select type' and not self.type_dropdown_btn.disabled:
+      self.type_error_msg.text = 'Type is required.'
+      Clock.schedule_once(self.clearError, 2)
+    else:
+      self.addNewElementToWeb()
+
+  # Adds the new Element to the web_data and reactivates the displays:
+  def addNewElementToWeb(self):
+    app = App.get_running_app()
+    name = self.name_input.text
+    if self.parent_display_type == 'bank':
+      type = 'Bank'
+    else:
+      type = self.type_dropdown_btn.text
+    # Assemble new element data based on where the NewElement button sits in the tree:
+    new_element_dict = {"name": name, "notes": "", "type": type}
+    if new_element_dict["type"] == 'NPC':
+      new_element_dict["rank"] = 'None'
+      new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
+    elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
+      new_element_dict["stats"] = {"Clout": -1}
+      new_element_dict["cause"] = ""
+    new_element_id = app.root.web_data.addElement(new_element_dict)
+    app.root.web_data.save()
+    # If the NewElementPopUp object was created from a linker's search, we need to link it to the focus:
+    if self.link_to_focus:
+      app.root.updateElementLinks(link_type_to_update=self.parent_linker_type, 
+                                  id_to_link=new_element_id
+                                  )
+    elif self.parent_display_type == 'web':
+      app.root.focus_element = app.root.web_data.elements["e" + str(new_element_id)]
+    app.root.remove_widget(app.root.app_overlay)	
+    if self.parent_display_type == 'web':
+      app.root.activateWebDisplay()
+    elif self.parent_display_type == 'flat': 
+      app.root.activateFlatDisplay()
+    else:
+      app.root.activateBankDisplay()  
+  
 """
+=======================================================================================================
 These widgets make up the left hand window of the application, which contains all widgets for the 
 Element Web itself.
+=======================================================================================================
 """
-# Holds the various ways of displaying Elements and the ElementDisplayBar:
-class ElementDisplay(BoxLayout):
-  display_window = ObjectProperty(None)
+
+# All visible widgets in the ElementWeb and ElementFlat are Elements of various types.
+class Element(Button):
+  element_key = StringProperty()
+  element_data = ObjectProperty(None)
+  element_name = StringProperty()
+  type_color = ListProperty()
   
-# A bar of display formats for Elements in the Web. Sits at the top of ElementDisplay:
-class ElementDisplayBar(BoxLayout):
-  detail_display_label = ObjectProperty(None)    
+  # Various objects designed to hold links to other widgets in the app that all Elements
+  # need to be able to alter:
+  root_link = ObjectProperty(None) # Used to access web meta_data.
+  details_link = ObjectProperty(None) # Used to access the details window.
+  
+  def __init__(self, **kwargs):
+    super(Button, self).__init__(**kwargs)
+    self.element_name = self.element_data.name
+    if self.element_data.type == 'Bank':
+      self.type_color = [0, 0, 0, .25]
+    else:
+      self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
+  
+  def selectElement(self):
+    self.root_link.selected_element = self.element_data
+    self.details_link.activateElementDetails()
+	
+  def on_touch_down(self, touch):
+    if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
+      if self.element_data.type == 'Bank':
+        pass
+      else:
+        self.root_link.focus_element = self.element_data
+        self.root_link.activateWebDisplay()
+    elif self.collide_point(touch.pos[0], touch.pos[1]):
+      self.root_link.selected_element = self.element_data
+      self.selectElement()
   
 # A window of display formats resulting from ElementDisplayBar selections:
 class ElementDisplayWindow(Widget):
   scroll_layout = ObjectProperty(None)
   web_layout = ObjectProperty(None)
   scroll_child = ObjectProperty(None)
+  
+"""
+ These widgets are used for flat views of Elements.
+ -------------------------------------------------------------------------------------------------------
+"""
   
 # Tab that displays all Elements in the Web on one screen:
 class ElementFlatScroll(ScrollView):
@@ -499,6 +648,27 @@ class ElementFlat(StackLayout):
     add_element_button.size = add_element_button.texture_size
     add_element_button.bind(on_press=partial(self.root_link.activateNewElementPopUp, self.parent_display_type))
     self.add_widget(add_element_button)
+	
+"""
+ These widgets are used for web views of Elements.
+ -------------------------------------------------------------------------------------------------------
+"""
+		
+# Used to block out the sub-regions of the ElementWeb window:
+class WebRegion(AnchorLayout):
+  pass
+  
+# Used to store linked elements in a neat stack:
+class LinkedElTray(BoxLayout):
+  pass
+  
+# Used to hold the unlink button and anchor layout that holds linked elements:
+class LinkHolder(BoxLayout):
+  root_link = ObjectProperty(None)
+  element_id = NumericProperty(None)
+  link_anchor = ObjectProperty(None)
+  unlinker_type = StringProperty()
+  holder_height = NumericProperty(None)	
 
 # Tab that displays a focus Element and its related Elements from the Web:
 class ElementWeb(BoxLayout):
@@ -675,127 +845,6 @@ class ElementWeb(BoxLayout):
         _, one_time_height = self.createLinkLayout(type)
         if self.child_layout_height < one_time_height:
           self.child_layout_height = one_time_height
-		
-# Used to block out the sub-regions of the ElementWeb window:
-class WebRegion(AnchorLayout):
-  pass
-  
-# Used to store linked elements in a neat stack:
-class LinkedElTray(BoxLayout):
-  pass
-  
-# Used to hold the unlink button and anchor layout that holds linked elements:
-class LinkHolder(BoxLayout):
-  root_link = ObjectProperty(None)
-  element_id = NumericProperty(None)
-  link_anchor = ObjectProperty(None)
-  unlinker_type = StringProperty()
-  holder_height = NumericProperty(None)
-  
-# All visible widgets in the ElementWeb and ElementFlat are Elements of various types.
-class Element(Button):
-  element_key = StringProperty()
-  element_data = ObjectProperty(None)
-  element_name = StringProperty()
-  type_color = ListProperty()
-  
-  # Various objects designed to hold links to other widgets in the app that all Elements
-  # need to be able to alter:
-  root_link = ObjectProperty(None) # Used to access web meta_data.
-  details_link = ObjectProperty(None) # Used to access the details window.
-  
-  def __init__(self, **kwargs):
-    super(Button, self).__init__(**kwargs)
-    self.element_name = self.element_data.name
-    if self.element_data.type == 'Bank':
-      self.type_color = [0, 0, 0, .25]
-    else:
-      self.type_color = self.root_link.web_data.type_colors_kivy[self.element_data.type]
-  
-  def selectElement(self):
-    self.root_link.selected_element = self.element_data
-    self.details_link.activateElementDetails()
-	
-  def on_touch_down(self, touch):
-    if touch.is_double_tap and self.collide_point(touch.pos[0], touch.pos[1]):
-      if self.element_data.type == 'Bank':
-        pass
-      else:
-        self.root_link.focus_element = self.element_data
-        self.root_link.activateWebDisplay()
-    elif self.collide_point(touch.pos[0], touch.pos[1]):
-      self.root_link.selected_element = self.element_data
-      self.selectElement()
-
-class NewElementPopUp(BoxLayout):
-  parent_display_type = StringProperty()
-  link_to_focus = BooleanProperty(False)
-  parent_linker_type = StringProperty(None)    
-  type_dropdown_btn = ObjectProperty(None)
-  type_dropdown = ObjectProperty(None)
-  name_input = ObjectProperty(None)
-  validate_btn = ObjectProperty(None)
-  type_error_msg = ObjectProperty(None)
-
-  def __init__(self, **kwargs):
-    super(BoxLayout, self).__init__(**kwargs)
-    app = App.get_running_app()
-    if (self.parent_display_type == 'flat' or self.parent_display_type == 'bank'):
-      self.pos_hint = [None, None]
-    self.type_dropdown = DropDown()
-	
-    # Populate dropdown with types from the web's meta_data:
-    for type in app.root.web_data.meta_data["available_types"]:
-      btn = Button(text=type, size_hint_y=None, height=25, background_normal='', color=[0, 0, 0, 1])
-      color_array = app.root.web_data.type_colors_kivy[type] 
-      btn.background_color=color_array		
-      btn.bind(on_release=lambda btn: self.type_dropdown.select(btn.text))
-      self.type_dropdown.add_widget(btn)
-
-    self.type_dropdown_btn.bind(on_release=self.type_dropdown.open)
-    self.type_dropdown.bind(on_select=lambda instance, x: setattr(self.type_dropdown_btn, 'text', x))
-
-  def clearError(self, *args):
-    self.type_error_msg.text = ''
-
-  def validateNewElement(self):
-    if self.type_dropdown_btn.text == 'select type' and not self.type_dropdown_btn.disabled:
-      self.type_error_msg.text = 'Type is required.'
-      Clock.schedule_once(self.clearError, 2)
-    else:
-      self.addNewElementToWeb()
-
-  def addNewElementToWeb(self):
-    app = App.get_running_app()
-    name = self.name_input.text
-    if self.parent_display_type == 'bank':
-      type = 'Bank'
-    else:
-      type = self.type_dropdown_btn.text
-    # Assemble new element data based on where the NewElement button sits in the tree:
-    new_element_dict = {"name": name, "notes": "", "type": type}
-    if new_element_dict["type"] == 'NPC':
-      new_element_dict["rank"] = 'None'
-      new_element_dict["stats"] = {"Charisma": -1, "Intellect": -1, "Reputation": -1}
-    elif (new_element_dict["type"] == 'Faction' or new_element_dict["type"] == 'Party'):
-      new_element_dict["stats"] = {"Clout": -1}
-      new_element_dict["cause"] = ""
-    new_element_id = app.root.web_data.addElement(new_element_dict)
-    app.root.web_data.save()
-    # If the NewElementPopUp object was created from a linker's search, we need to link it to the focus:
-    if self.link_to_focus:
-      app.root.updateElementLinks(link_type_to_update=self.parent_linker_type, 
-                                  id_to_link=new_element_id
-                                  )
-    elif self.parent_display_type == 'web':
-      app.root.focus_element = app.root.web_data.elements["e" + str(new_element_id)]
-    app.root.remove_widget(app.root.app_overlay)	
-    if self.parent_display_type == 'web':
-      app.root.activateWebDisplay()
-    elif self.parent_display_type == 'flat': 
-      app.root.activateFlatDisplay()
-    else:
-      app.root.activateBankDisplay()
   
 class LinkElement(BoxLayout):
   search_input = ObjectProperty(None)
@@ -827,11 +876,17 @@ class LinkElement(BoxLayout):
 class LinkElementInput(TextInput):
   pass
 
-  
+
 """
-These widgets make up the right hand window of the application, which shows notes and other details 
-about elements selected in the Element Web window.
-"""
+=======================================================================================================
+ ~~~ Element Details Widgets ~~~
+ These widgets are all involved in displaying deeper information about the selected_element, including
+ type-specific content for the selected_element, which is determined and added dynamically. They make 
+ up the right hand window of the application.
+=======================================================================================================
+"""  
+
+# Contains all widgets of the Element Details window, and a method to activate all of them.
 class ElementDetails(BoxLayout):
   root_link = ObjectProperty(None)
   detail_display_bar = ObjectProperty(None)
@@ -854,12 +909,17 @@ class ElementDetails(BoxLayout):
 	# Add content based on selected element type:
     self.type_content.addTypeContent(selected_element.type)
 	
+# Displays the name of selected_element and allows it to be edited.
 class DetailNameInput(TextInput):
   root_link = ObjectProperty(None)
 
+# Holds the ElementNotes text input and calls it into existence. Separating these two out 
+# avoids a bug where attempting to call the ElementNotes TextInput into existence during the creation
+# of the main application widget tree would cause errors or overwrite the notes value with a null string.
 class ElementNotesFrame(Widget):
   element_notes = ObjectProperty(None)
   
+  # Pulls the selected_element's notes value and creates an EleemntNotes object to display them.
   def activateElementNotes(self):
     app = App.get_running_app()
     self.clear_widgets()
@@ -868,32 +928,18 @@ class ElementNotesFrame(Widget):
     self.add_widget(self.element_notes)
     self.setNotesText()
 	
+  # Allows easy access to reset the displayed notes of the selected_element.
   def setNotesText(self):
     self.element_notes.text = self.parent.root_link.selected_element.notes
 	
+# Created an instance of TextInput to allow for dynamic editing of the notes value.
 class ElementNotes(TextInput):
   root_link = ObjectProperty(None)
   
-class StatBubble(Widget):
-  stat = StringProperty()
-  
-class StatToggles(BoxLayout):
-  high_btn = ObjectProperty(None)
-  med_btn = ObjectProperty(None)
-  low_btn = ObjectProperty(None)
-  stat_group = StringProperty()
-  stat_val = NumericProperty()
-  
-  def setStat(self, stat, stat_val):
-    app = App.get_running_app()
-    app.root.updateElementDetails(['stats', stat], stat_val)
-    app.root.element_details.type_content.addTypeContent(app.root.selected_element.type)
-	  
-class RankDropdown(DropDown):
-  def onSelect(self, btn_to_change, selected_rank):
-    app = App.get_running_app()
-    setattr(btn_to_change, 'text', selected_rank)
-    app.root.updateElementDetails(['rank'], selected_rank)
+"""
+ These widgets are used for displaying content specific to the Bank Element type.
+ -------------------------------------------------------------------------------------------------------
+"""  
 
 class BankTypeContent(BoxLayout):
   
@@ -905,10 +951,67 @@ class BankTypeContent(BoxLayout):
     app.root.element_details.activateElementDetails()
     app.root.focus_element = app.root.selected_element
     app.root.activateWebDisplay()
+	
+"""
+ These widgets are used for displaying content specific to the Player Element type.
+ -------------------------------------------------------------------------------------------------------
+"""
 
-class CauseInput(TextInput):
-  root_link = ObjectProperty(None)
+# This BoxLayout displays promises made by the player:
+class Promises(BoxLayout):
+  promise_data = DictProperty(None)
   
+  def activatePromises(self):
+    app = App.get_running_app()
+    for i in range(1, 6):
+      prom_key = 'prom_' + str(i)
+      promise_holder = PromiseHolder(root_link=app.root, promise_key=prom_key)
+      promise_holder.promise_input.text = self.promise_data[prom_key]["promise"]
+      promise_holder.promised_to_input.text = self.promise_data[prom_key]["promised_to"]
+      self.add_widget(promise_holder)
+	  
+# This BoxLayout holds each promise's data and provides a button for one click clearing of its values.
+class PromiseHolder(BoxLayout):
+  root_link = ObjectProperty(None)
+  promise_key = StringProperty()
+  promise_input = ObjectProperty(None)
+  promised_to_input = ObjectProperty(None)
+  
+  def clearPromise(self):
+    self.promise_input.text = ''
+    self.promised_to_input.text = ''
+
+# This BoxLayout displays information about the Objectives attached to the player's Agenda, and
+# allows them to be marked complete. 
+class Objective(BoxLayout):
+  root_link = ObjectProperty(None)
+  obj_id = StringProperty()
+  complete_toggle = ObjectProperty(None)
+  complete_ind = BooleanProperty(False)
+  objective_text = ObjectProperty(None)
+  
+  def completeObjToggle(self):
+    checkbox_val = 0
+    if self.complete_toggle.active:
+      checkbox_val = 1
+    self.root_link.updateElementDetails(['objectives', self.obj_id, 'completed?'], checkbox_val)
+
+# This TextInput displays the name of the support and allows it to be edited dynamically.
+class Support(TextInput):
+  root_link = ObjectProperty(None)
+  supp_id = StringProperty()
+  
+# This DropDown allows different scopes to be selected for the Agenda, updating the display whenever
+# it is changed.
+class ScopeDropdown(DropDown):
+  def onSelect(self, btn_to_change, selected_scope):
+    app = App.get_running_app()
+    setattr(btn_to_change, 'text', selected_scope)
+    app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
+    app.root.element_details.activateElementDetails()	
+	
+# This BoxLayout holds the Agenda's basic info and also pulls in Objectives, Support, and the 
+# ScopeDropdown from above when activated.
 class Agenda(BoxLayout):
   root_link = ObjectProperty(None)
   player_element = ObjectProperty(None)
@@ -921,6 +1024,8 @@ class Agenda(BoxLayout):
   num_objectives = NumericProperty(0)
   num_support = NumericProperty(0)
   
+  # Populates the Agenda's basic info and adds Objectives and Support appropriate to the Agenda's 
+  # scope (if any).
   def activateAgenda(self):
     app = App.get_running_app()
     self.ambition_input.text = self.player_element.agenda["ambition"]
@@ -960,7 +1065,8 @@ class Agenda(BoxLayout):
         self.createSupport()
       else:
         self.loadSupport()
-	
+  
+  # When an Agenda's scope is selected, the appropriate # of Objectives is created.
   def createObjectives(self):
     app = App.get_running_app()
     self.num_objectives = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["objectives"]
@@ -974,6 +1080,7 @@ class Agenda(BoxLayout):
       self.objective_tray.add_widget(objective)
     app.root.updateElementDetails(['objectives'], objective_dict)
 
+  # When an Agenda already has Objectives, they need to be loaded.
   def loadObjectives(self):
     app = App.get_running_app()
     self.num_objectives = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["objectives"]
@@ -989,7 +1096,8 @@ class Agenda(BoxLayout):
                             complete_ind=complete_boolean)
       objective.objective_text.text = obj_data["obj_text"]
       self.objective_tray.add_widget(objective)
-	
+	  
+  # When an Agenda's scope is selected, the appropriate # of Supports is created.
   def createSupport(self):
     app = App.get_running_app()
     self.num_support = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["support"]
@@ -1004,6 +1112,7 @@ class Agenda(BoxLayout):
       self.support_tray.add_widget(support)
     app.root.updateElementDetails(['support'], supp_dict) 
 
+  # When an Agenda already has Objectives, they need to be loaded.
   def loadSupport(self):
     app = App.get_running_app()
     self.num_support = app.root.web_data.meta_data["agenda_scopes"][self.agenda_scope]["support"]
@@ -1016,6 +1125,8 @@ class Agenda(BoxLayout):
                         )
       self.support_tray.add_widget(support)
 	  
+  # When the Clear Agenda button is pressed, this method throws up a pop up to confirm that 
+  # the user really wants to clear the Agenda.
   def clearConfirm(self):
     app = App.get_running_app()
     clear_conf_pop_up = Confirmation(root_link=app.root)
@@ -1027,64 +1138,112 @@ class Agenda(BoxLayout):
     app.root.add_widget(app.root.app_overlay)
     app.root.app_overlay.add_widget(clear_conf_pop_up)		
   
-class AgendaInput(TextInput):
-  pass
-  
-class Objective(BoxLayout):
-  root_link = ObjectProperty(None)
-  obj_id = StringProperty()
-  complete_toggle = ObjectProperty(None)
-  complete_ind = BooleanProperty(False)
-  objective_text = ObjectProperty(None)
-  
-  def completeObjToggle(self):
-    checkbox_val = 0
-    if self.complete_toggle.active:
-      checkbox_val = 1
-    self.root_link.updateElementDetails(['objectives', self.obj_id, 'completed?'], checkbox_val)
-  
-class Support(TextInput):
-  root_link = ObjectProperty(None)
-  supp_id = StringProperty()
-  
-class ScopeDropdown(DropDown):
-  def onSelect(self, btn_to_change, selected_scope):
-    app = App.get_running_app()
-    setattr(btn_to_change, 'text', selected_scope)
-    app.root.updateElementDetails(['agenda', 'scope'], selected_scope)
-    app.root.element_details.activateElementDetails()
 
-class Confirmation(BoxLayout):
-  root_link = ObjectProperty(None)
-  prompt = ObjectProperty(None)
-	  
-class Promises(BoxLayout):
-  promise_data = DictProperty(None)
+"""
+ These widgets are used for displaying content specific to the NPC and Faction/Party Element type.
+ -------------------------------------------------------------------------------------------------------
+"""	  
+
+class StatBubble(AnchorLayout):
+  stat = StringProperty()
   
-  def activatePromises(self):
+class StatToggles(BoxLayout):
+  high_btn = ObjectProperty(None)
+  med_btn = ObjectProperty(None)
+  low_btn = ObjectProperty(None)
+  stat_group = StringProperty()
+  stat_val = NumericProperty()
+  
+  def setStat(self, stat, stat_val):
     app = App.get_running_app()
-    for i in range(1, 6):
-      prom_key = 'prom_' + str(i)
-      promise_holder = PromiseHolder(root_link=app.root, promise_key=prom_key)
-      promise_holder.promise_input.text = self.promise_data[prom_key]["promise"]
-      promise_holder.promised_to_input.text = self.promise_data[prom_key]["promised_to"]
-      self.add_widget(promise_holder)
+    app.root.updateElementDetails(['stats', stat], stat_val)
+    app.root.element_details.type_content.addTypeContent(app.root.selected_element.type)
+
+# This BoxLayout holds the widgets necessary to display and, if needed, edit stats.
+class StatHolder(BoxLayout):
+  stat_bubble = ObjectProperty(None)
+  stat_label = ObjectProperty(None)
+  toggles = ObjectProperty(None)
+  toggle_holder = ObjectProperty(None)	
+	
+# This is a GridLayout which can contain 1 to many stat displays:	
+class Stats(GridLayout):
+  selected_element = ObjectProperty(None)
+  stat_die_levels = ListProperty()
+  mode = StringProperty() # Expects 'NPC' or 'Org'
   
-class PromiseHolder(BoxLayout):
+  def activateStats(self):
+    stats = self.selected_element.stats
+    stat_names = []
+    # This is a list of objects that will be looped over at the end, adding them in the proper order.
+    stat_holders_to_add = []
+    if self.mode == 'NPC':
+      stat_names = ['Charisma', 'Intellect', 'Reputation']
+      for die_level in self.stat_die_levels[3:]:
+        stat_names.append('Rank')
+    else:
+      stat_names = ['Clout']
+	
+    for i, stat_name in enumerate(stat_names):
+      stat_holder = StatHolder()
+      stat_holder.stat_label.text = stat_name
+      if i <= 2:
+        stat_position = stats[stat_name]
+        stat_holder.toggles = StatToggles(stat_group=stat_name)
+        stat_holder.toggle_holder.add_widget(stat_holder.toggles)
+      else:
+        stat_position = i
+      if stat_position == -1:
+        stat_val = 0
+      else:
+        stat_val = self.stat_die_levels[stat_position]
+		
+        # If the stat holder was given toggles earlier, this will be successful, if not 
+		# move right on past.
+        try:
+          if stat_position == 0:
+            stat_holder.toggles.high_btn.state = 'down'
+          elif stat_position == 1:
+            stat_holder.toggles.med_btn.state = 'down'  
+          elif stat_position == 2:
+            stat_holder.toggles.low_btn.state = 'down' 
+        except AttributeError:
+          pass
+		  
+      # The 'Rank' stat_names are just placeholders to ensure each stat_holder has the same height.
+      if stat_name != 'Rank':
+        stat_holder.stat_label.color = [0, 0, 0, 1]
+
+      # Update the value of the stat in the stat_holder's stat_bubble with stat_val:
+      stat_holder.stat_bubble.stat = "d" + str(stat_val)
+      
+      # Queue the completed stat_holder for adding to the root widget:
+      stat_holders_to_add.append(stat_holder)
+	
+    # Loop over the completed stat holders and add them to the GridLayout in order.
+    for stat_holder in stat_holders_to_add:
+      self.add_widget(stat_holder)
+
+class RankDropdown(DropDown):
+  def onSelect(self, btn_to_change, selected_rank):
+    app = App.get_running_app()
+    setattr(btn_to_change, 'text', selected_rank)
+    app.root.updateElementDetails(['rank'], selected_rank)
+
+
+
+class CauseInput(TextInput):
   root_link = ObjectProperty(None)
-  promise_key = StringProperty()
-  promise_input = ObjectProperty(None)
-  promised_to_input = ObjectProperty(None)
   
-  def clearPromise(self):
-    self.promise_input.text = ''
-    self.promised_to_input.text = ''
+
 
 class TypeSpecificContent(BoxLayout):
   
   def addTypeContent(self, type):
     app = App.get_running_app()
     self.clear_widgets()
+	# This is a list of objects that will be looped over at the end, adding them in the proper order.
+    content_to_add = [] 
 	
     if type == 'Bank':
       bank_type_content = BankTypeContent()
@@ -1093,107 +1252,17 @@ class TypeSpecificContent(BoxLayout):
 	# Add stat display for appropriate types:
     if (type == 'NPC' or type == 'Faction' or type == 'Party'):
       if type == 'NPC':
-        stat_display_size = .7
+        stat_die_levels = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
+        stat_mode = 'NPC'
       else:
-        stat_display_size = .44
-      stat_display = GridLayout(cols=8, size=self.size, pos=self.pos, size_hint_y=stat_display_size)
-
-	  # Set up the stats to loop over (if needed) when creating the stat grid based on the 
-	  # element's type:
-      if (type == 'Faction' or type == 'Party'):
-        # Create a widget to hold the bubble label, and toggles:
-        stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
+        stat_die_levels = [10, 8, 6]
+        stat_mode = 'Org'
 		
-        # Grab "Clout" from the stats dict and create a bubble for it:
-        clout_list = [10, 8, 6]
-        clout_position = app.root.selected_element.stats["Clout"]
-        clout_val = -1
-        if clout_position == -1:
-          clout_val = 0
-        else:
-          clout_val = clout_list[clout_position]
-        stat_bubble = StatBubble(stat='d' + str(clout_val))
-        stat_holder.add_widget(stat_bubble)
-        
-		# Add a Clout label:
-        stat_label = Label(text='Clout', color=[0, 0, 0, 1], size_hint_y=0.2)
-        stat_holder.add_widget(stat_label)
-		
-        # Add StatToggles:
-        stat_toggles = StatToggles(stat_group='Clout')
-        if clout_position == 0:
-          stat_toggles.high_btn.state = 'down'
-        elif clout_position == 1:
-          stat_toggles.med_btn.state = 'down'
-        elif clout_position == 2:
-          stat_toggles.low_btn.state = 'down'			
-        stat_holder.add_widget(stat_toggles)
-		
-        stat_display.add_widget(stat_holder)
-      elif type == 'NPC':
-        alpha_stats = ["Charisma", "Intellect", "Reputation"]
-		
-        # Check to see if the NPC has a rank yet:
-        if app.root.selected_element.rank == 'None':
-          stats_to_loop = [0, 0, 0]
-        else:
-          stats_to_loop = app.root.web_data.meta_data["npc_ranks"][app.root.selected_element.rank]
-        
-        rank_stats = stats_to_loop[3:]
-		
-		# First loop over the first 3 items in stats_to_loop to put them in alpha order:
-        for i in alpha_stats:
-          # Create a widget to hold the bubble, label, and toggles:
-          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
-		  
-		  # Get the high/medium/low (0/1/2) index of the current stat and create a bubble for it:
-          stat_position = app.root.selected_element.stats[i]
-          stat_value = -1
-          if stat_position == -1:
-            stat_value = 0
-          else:
-            stat_value = stats_to_loop[stat_position]
-          stat_bubble = StatBubble(stat='d' + str(stat_value))
-		  
-		  # Add the appropriate stat label:
-          stat_label = Label(text=i, color=[0, 0, 0, 1], size_hint_y=0.2)
-		  
-          # Determine which button should be down and add stat toggles:
-          stat_toggles = StatToggles(stat_group=i)
-          if stat_position == 0:
-            stat_toggles.high_btn.state = 'down'
-          elif stat_position == 1:
-            stat_toggles.med_btn.state = 'down'
-          elif stat_position == 2:
-            stat_toggles.low_btn.state = 'down'		  
-          		  
-		  # Add the bubble and then the label to the BoxLayout holder widget:
-          stat_holder.add_widget(stat_bubble)
-          stat_holder.add_widget(stat_label)
-          stat_holder.add_widget(stat_toggles)
-		  
-          stat_display.add_widget(stat_holder)
-        
-		# Now loop over the remaining items in stats_to_loop (rank_stats):
-        for i in rank_stats:
-          # Create a widget to hold the bubble and a dummy label:
-          stat_holder = BoxLayout(orientation='vertical', size_hint=(None, 1))
-		  
-		  # Add the stat bubble:
-          stat_bubble = StatBubble(stat='d' + str(i))
-          stat_holder.add_widget(stat_bubble)
-		  
-		  # Add a dummy label:
-          stat_label = Label(text="Rank", color=[1, 1, 1, 1], size_hint_y=0.2)
-          stat_holder.add_widget(stat_label)
-		  
-          # Add a dummy toggle:
-          dummy_toggle = Label(text='None', color=[1, 1, 1, 1], size_hint_y=0.2)
-          stat_holder.add_widget(dummy_toggle)
-          
-          stat_display.add_widget(stat_holder)
-
-      # Add the finalized stat_display
+      stat_display = Stats(selected_element=app.root.selected_element,
+                           stat_die_levels=stat_die_levels,
+                           mode=stat_mode
+                           )
+      stat_display.activateStats()
       self.add_widget(stat_display)
 
 	# Add other type specific displays:
@@ -1229,13 +1298,13 @@ class TypeSpecificContent(BoxLayout):
       else:
         displayed_rank = sel_npc_rank
 
-      self.dropdown_btn = Button(text=displayed_rank)
-      self.dropdown_btn.bind(on_release=dropdown.open)
-      dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(self.dropdown_btn, x))
+      rank_dropdown_btn = Button(text=displayed_rank)
+      rank_dropdown_btn.bind(on_release=dropdown.open)
+      dropdown.bind(on_select=lambda instance, x: dropdown.onSelect(rank_dropdown_btn, x))
 	  
       npc_buttons = BoxLayout(orientation='horizontal', size_hint_y=0.1, spacing=10)
       npc_buttons.add_widget(rank_label)
-      npc_buttons.add_widget(self.dropdown_btn)
+      npc_buttons.add_widget(rank_dropdown_btn)
 	  
       retire_btn = Button(text='Retire NPC')
       retire_btn.bind(on_press=self.retireConfirm)
@@ -1248,8 +1317,11 @@ class TypeSpecificContent(BoxLayout):
       self.add_widget(arch_label)
 	  
       # Add the archetype textinput:
-      arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=1.5)
+      arch_input = TextInput(size=self.size, pos=self.pos, size_hint_y=.3)
       self.add_widget(arch_input)
+	  
+      # Add a blank placeholder:
+      self.add_widget(FloatLayout(size_hint_y=.5))
 
     elif type == 'Agent':
       retire_btn = Button(text='Retire NPC', height=30, size_hint_y=None)
@@ -1279,8 +1351,14 @@ class TypeSpecificContent(BoxLayout):
     
   
 """
-Build the app:
-"""
+=======================================================================================================
+ ~~~ Build the Widget Tree and Start the App ~~~
+ The app widget and call to run it. This loads the data from the web upon build and sets up the initial
+ focus_element, activates the web viw, and loads the focused Element history. If I can figure out a 
+ better way of doing this I'll implement it, because currently it is impossible for me to ensure that 
+ the maximixation of the window always fires before activateWebDisplay() and loadRecentElements()...
+=======================================================================================================
+"""  
 class elementWebApp(App):
   app = ObjectProperty(None)
   
