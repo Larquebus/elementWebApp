@@ -662,6 +662,35 @@ class WebRegion(AnchorLayout):
 class LinkedElTray(BoxLayout):
   pass
   
+# A BoxLayout that contains a button that activates an instance of the SearchBar widget to find
+# an Element to link to the focus or to add a new Element and link it to the focus.
+class LinkElement(BoxLayout):
+  search_input = ObjectProperty(None)
+  linker_type = StringProperty(None)
+  search_orientation = StringProperty('right')
+  
+  def linkNewElement(self):
+    app = App.get_running_app()
+    search_x = -1
+    search_y = self.y + 1
+    if self.search_orientation == 'left':
+      search_x = self.x - 250
+    else:
+      search_x = self.x + 50
+
+    link_search_bar = SearchBar(pos=(search_x, search_y), size=[250, 30], size_hint=(None,None))
+    
+    if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
+      link_search_bar.filter = 'type:char'
+
+    link_search_bar.parent_display_type='web'
+    link_search_bar.parent_linker_type=self.linker_type
+	
+    app.root.app_overlay = SearchOverlay(size=app.root.size)
+    app.root.app_overlay.input_obj = link_search_bar
+    app.root.add_widget(app.root.app_overlay)	
+    app.root.app_overlay.add_widget(link_search_bar)  
+  
 # Used to hold the unlink button and anchor layout that holds linked elements:
 class LinkHolder(BoxLayout):
   root_link = ObjectProperty(None)
@@ -845,37 +874,6 @@ class ElementWeb(BoxLayout):
         _, one_time_height = self.createLinkLayout(type)
         if self.child_layout_height < one_time_height:
           self.child_layout_height = one_time_height
-  
-class LinkElement(BoxLayout):
-  search_input = ObjectProperty(None)
-  linker_type = StringProperty(None)
-  search_orientation = StringProperty('right')
-  
-  def linkNewElement(self):
-    app = App.get_running_app()
-    search_x = -1
-    search_y = self.y + 1
-    if self.search_orientation == 'left':
-      search_x = self.x - 250
-    else:
-      search_x = self.x + 50
-
-    link_search_bar = SearchBar(pos=(search_x, search_y), size=[250, 30], size_hint=(None,None))
-    
-    if (self.linker_type == 'allies' or self.linker_type == 'enemies'):
-      link_search_bar.filter = 'type:char'
-
-    link_search_bar.parent_display_type='web'
-    link_search_bar.parent_linker_type=self.linker_type
-	
-    app.root.app_overlay = SearchOverlay(size=app.root.size)
-    app.root.app_overlay.input_obj = link_search_bar
-    app.root.add_widget(app.root.app_overlay)	
-    app.root.app_overlay.add_widget(link_search_bar)
-  
-class LinkElementInput(TextInput):
-  pass
-
 
 """
 =======================================================================================================
@@ -990,6 +988,7 @@ class Objective(BoxLayout):
   complete_ind = BooleanProperty(False)
   objective_text = ObjectProperty(None)
   
+  # Translates a change to the CheckBox for the Objective into a change to the Objective. 
   def completeObjToggle(self):
     checkbox_val = 0
     if self.complete_toggle.active:
@@ -1137,7 +1136,6 @@ class Agenda(BoxLayout):
                                          )
     app.root.add_widget(app.root.app_overlay)
     app.root.app_overlay.add_widget(clear_conf_pop_up)		
-  
 
 """
  These widgets are used for displaying content specific to the NPC and Faction/Party Element type.
@@ -1146,7 +1144,9 @@ class Agenda(BoxLayout):
 
 class StatBubble(AnchorLayout):
   stat = StringProperty()
-  
+
+# This BoxLayout holds a group of 3 ToggleButtons which determine if a given stat is 
+# (H)igh, (M)edium, or (L)ow. 
 class StatToggles(BoxLayout):
   high_btn = ObjectProperty(None)
   med_btn = ObjectProperty(None)
@@ -1154,6 +1154,7 @@ class StatToggles(BoxLayout):
   stat_group = StringProperty()
   stat_val = NumericProperty()
   
+  # Updates the stat's value when the toggle is changed.
   def setStat(self, stat, stat_val):
     app = App.get_running_app()
     app.root.updateElementDetails(['stats', stat], stat_val)
@@ -1175,8 +1176,6 @@ class Stats(GridLayout):
   def activateStats(self):
     stats = self.selected_element.stats
     stat_names = []
-    # This is a list of objects that will be looped over at the end, adding them in the proper order.
-    stat_holders_to_add = []
     if self.mode == 'NPC':
       stat_names = ['Charisma', 'Intellect', 'Reputation']
       for die_level in self.stat_die_levels[3:]:
@@ -1217,11 +1216,7 @@ class Stats(GridLayout):
       # Update the value of the stat in the stat_holder's stat_bubble with stat_val:
       stat_holder.stat_bubble.stat = "d" + str(stat_val)
       
-      # Queue the completed stat_holder for adding to the root widget:
-      stat_holders_to_add.append(stat_holder)
-	
-    # Loop over the completed stat holders and add them to the GridLayout in order.
-    for stat_holder in stat_holders_to_add:
+      # Add the completed stat_holder to the GridLayout:
       self.add_widget(stat_holder)
 
 class RankDropdown(DropDown):
@@ -1230,12 +1225,14 @@ class RankDropdown(DropDown):
     setattr(btn_to_change, 'text', selected_rank)
     app.root.updateElementDetails(['rank'], selected_rank)
 
-
-
+# This TextInput displays the name of the support and allows it to be edited dynamically.
 class CauseInput(TextInput):
   root_link = ObjectProperty(None)
   
-
+"""
+ This widget brings all the above widgets together when called by activateElementDetails().
+ -------------------------------------------------------------------------------------------------------
+"""	  
 
 class TypeSpecificContent(BoxLayout):
   
@@ -1338,6 +1335,7 @@ class TypeSpecificContent(BoxLayout):
       agenda.activateAgenda()
       self.add_widget(agenda)
   
+  # Used when displaying NPCs and Agents to prevent accidental retirement.
   def retireConfirm(self, *args):
     app = App.get_running_app()
     retire_conf_pop_up = Confirmation(root_link=app.root)

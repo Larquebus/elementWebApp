@@ -208,6 +208,22 @@
 		size_hint: .9, None
 		anchor_x: 'center'
 		anchor_y: 'center'	
+
+# This is a BoxLayout that at first just contains one button to link another Element to the focus 
+# Element.
+#
+<LinkElement>:
+	size: 50, 50
+	pos: self.pos
+	size_hint: (None, None)
+	orientation: 'vertical'
+	link_button: link_button
+	Button:
+		id: link_button
+		font_name: 'Arial'
+		font_size: 14
+		text: "+"
+		on_press: self.parent.linkNewElement()	
 	
 # This is a BoxLayout (containing many other layouts) that is dynamically added to the 
 # ElementDisplayWindow when a web display of elements is called for. It is fairly complex and has many
@@ -281,22 +297,6 @@
 			height: root.child_layout_height
 			orientation: 'horizontal'
 	
-<LinkElement>:
-	size: 50, 50
-	pos: self.pos
-	size_hint: (None, None)
-	orientation: 'vertical'
-	link_button: link_button
-	Button:
-		id: link_button
-		font_name: 'Arial'
-		font_size: 14
-		text: "+"
-		on_press: self.parent.linkNewElement()
-		
-<LinkElementInput>:
-	multiline: False
-	
 #=======================================================================================================
 # ~~~ Element Details Widgets ~~~
 # These widgets are all involved in displaying deeper information about the selected_element, including
@@ -317,6 +317,9 @@
 # These widgets are used for displaying content specific to the Bank Element type.
 #-------------------------------------------------------------------------------------------------------
 
+# This BoxLayout contains and displays some buttons that are used to quickly activate the Banked Element
+# as an Agent or an NPC Element.
+#
 <BankTypeContent>:
 	orientation: 'vertical'
 	size_hint_y: .05
@@ -339,16 +342,8 @@
 # These widgets are used for displaying content specific to the Player Element type.
 #-------------------------------------------------------------------------------------------------------
 
-# This is a BoxLayout that displays promises made by the player:
-<Promises>:
-	orientation: 'vertical'
-	size_hint_y: .5
-	Label:
-		text: 'Promises'
-		color: [0, 0, 0, 1]
-		size_hint_y: .15
-
-# This is a BoxLayout that holds each promise's data:
+# This is a BoxLayout that holds each promise's data and allows it to be edited and quickly cleared.
+#
 <PromiseHolder>:
 	promise_input: promise_input
 	promised_to_input: promised_to_input
@@ -367,7 +362,18 @@
 		size_hint_x: .1
 		on_press: root.clearPromise()
 
-# This is a BoxLayout that holds each Objective's data.		
+# This is a BoxLayout that displays the PromiseHolder widgets.
+#
+<Promises>:
+	orientation: 'vertical'
+	size_hint_y: .5
+	Label:
+		text: 'Promises'
+		color: [0, 0, 0, 1]
+		size_hint_y: .15
+
+# This is a BoxLayout that holds each Objective's data and allows it to be edited and marked complete.
+#
 <Objective>:
 	complete_toggle: complete_toggle
 	objective_text: objective_text
@@ -385,11 +391,13 @@
 		on_text: root.root_link.updateElementDetails(['objectives', root.obj_id, 'obj_text'], self.text)		
 
 # This is a TextInput that displays the name of the Support and allows it to be edited dynamically.
+#
 <Support>:
 	on_text: self.root_link.updateElementDetails(['support', self.supp_id], self.text)		
 		
 # This is a BoxLayout that holds the Agenda's basic info as well as its Objectives, Support, and the 
 # buttons used to set the Agenda's scope and clear it.
+#
 <Agenda>:
 	button_bar: button_bar
 	ambition_input: ambition_input
@@ -445,6 +453,11 @@
 	FloatLayout:
 		size_hint_y: .05
 		
+# These widgets are used for displaying content specific to the NPC and Faction/Party Element types.
+#-------------------------------------------------------------------------------------------------------		
+
+# This is an AnchorLayout that contains the stat value and a circle around it.
+#		
 <StatBubble>:
 	anchor_x: 'center'
 	anchor_y: 'center'
@@ -464,7 +477,10 @@
 		text: root.stat
 		color: [0, 0, 0, 1]
 		pos: self.parent.pos
-		
+
+# This is a BoxLayout that contains a group of ToggleButtons used to set what a given stat should be
+# relative to the NPC's or Faction/Party's rank.
+#		
 <StatToggles>:
 	high_btn: high_btn
 	med_btn: med_btn
@@ -485,7 +501,9 @@
 		group: root.stat_group
 		text: 'L'
 		on_press: root.setStat(self.parent.stat_group, 2)		
-		
+
+# This is a BoxLayout that holds the StatBubble and StatToggles for each stat.
+#		
 <StatHolder>:
 	size: 100, 100
 	orientation: 'vertical'
@@ -504,18 +522,27 @@
 		id: toggle_holder
 		orientation: 'horizontal'
 		size_hint_y: .1
-		
+
+# This is a GridLayout that holds all the necessary StatHolders for the selected Element.
+#
 <Stats>:
 	cols: 8
 	height: 130
 	size_hint_y: None
 	padding: 10
 	spacing: 10
-		
+
+# This is a TextInput that displays the Faction/Party's Cause and allows it to be edited dynamically.
+#
 <CauseInput>:
 	on_text: self.root_link.updateElementDetails(['cause'], self.text)
 
-# Build the widget tree:	
+#=======================================================================================================
+# ~~~ Core Widget Tree ~~~
+# This widget is the core of the application and makes up the static foundation that all the other 
+# dynamic widgets are added to.
+#=======================================================================================================
+
 <AppFrame>:
 	id: app_
 	size: root.size
